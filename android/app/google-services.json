@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "948255516817",
+    "project_id": "vasundhara-app-3f2b0",
+    "storage_bucket": "vasundhara-app-3f2b0.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:948255516817:android:6d580067c7983001287730",
+        "android_client_info": {
+          "package_name": "com.kits.vasundhara"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "948255516817-ovad2rfbhke4fjleln42sl27vvijj1ev.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.kits.vasundhara",
+            "certificate_hash": "59628a580822d17fae6a51a079e000476f15d72f"
+          }
+        },
+        {
+          "client_id": "948255516817-nhnatckmhmrdgph48g3ij5qes9vd8rdp.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDQ5u-ONreZiB1_Lx8-KhyfB9YSEWPJSC8"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "948255516817-nhnatckmhmrdgph48g3ij5qes9vd8rdp.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

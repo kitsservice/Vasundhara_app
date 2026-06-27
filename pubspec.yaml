@@ -1,0 +1,45 @@
+name: vasundhara
+description: A professional tree plantation application.
+publish_to: 'none'
+
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.0.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  cupertino_icons: ^1.0.2
+  provider: ^6.0.5
+  google_fonts: ^6.1.0
+  flutter_animate: ^4.2.0
+  cached_network_image: ^3.3.0
+  intl: ^0.20.2
+  smooth_page_indicator: ^2.0.1
+  flutter_map: ^8.3.0
+  latlong2: ^0.9.1
+  firebase_core: ^4.11.0
+  firebase_auth: ^6.5.4
+  cloud_firestore: ^6.6.0
+  google_sign_in: ^7.2.0
+  image_picker: ^1.2.2
+  http: ^1.6.0
+  geolocator: ^14.0.3
+  flutter_map_marker_cluster: ^8.2.2
+  url_launcher: ^6.3.2
+  location: ^8.0.1
+  timeago: ^3.7.1
+  fl_chart: ^1.2.0
+  share_plus: ^13.1.0
+  path_provider: ^2.1.6
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^2.0.0
+
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/images/
