@@ -10,7 +10,8 @@ import '../theme/app_colors.dart';
 import '../providers/user_provider.dart';
 import '../services/cloudinary_service.dart';
 import 'package:google_fonts/google_fonts.dart';
-import '../screens/location_picker_screen.dart';
+import '../screens/map/location_picker_screen.dart';
+import 'package:lottie/lottie.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:location/location.dart' as loc;
@@ -171,7 +172,10 @@ class _TreeFormWidgetState extends State<TreeFormWidget>
           children: [
             const Icon(Icons.location_off, color: Colors.red),
             const SizedBox(width: 8),
-            Text(isMarathi ? 'GPS आवश्यक' : 'GPS Required', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+            Text(
+              isMarathi ? 'GPS आवश्यक' : 'GPS Required',
+              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+            ),
           ],
         ),
         content: Text(
@@ -185,7 +189,10 @@ class _TreeFormWidgetState extends State<TreeFormWidget>
               Navigator.pop(context); // Close dialog
               Navigator.pop(context); // Go back to previous screen
             },
-            child: Text(isMarathi ? 'मागे जा' : 'Go Back', style: const TextStyle(color: Colors.grey)),
+            child: Text(
+              isMarathi ? 'मागे जा' : 'Go Back',
+              style: const TextStyle(color: Colors.grey),
+            ),
           ),
           ElevatedButton(
             onPressed: () {
@@ -194,9 +201,14 @@ class _TreeFormWidgetState extends State<TreeFormWidget>
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.primary,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
             ),
-            child: Text(isMarathi ? 'GPS चालू करा' : 'Enable GPS', style: const TextStyle(color: Colors.white)),
+            child: Text(
+              isMarathi ? 'GPS चालू करा' : 'Enable GPS',
+              style: const TextStyle(color: Colors.white),
+            ),
           ),
         ],
       ),
@@ -322,10 +334,17 @@ class _TreeFormWidgetState extends State<TreeFormWidget>
       barrierDismissible: false,
       builder: (context) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: const Icon(
-          CupertinoIcons.check_mark_circled_solid,
-          color: AppColors.success,
-          size: 60,
+        title: SizedBox(
+          height: 120,
+          child: Lottie.network(
+            'https://assets3.lottiefiles.com/packages/lf20_touohxv0.json',
+            repeat: false,
+            errorBuilder: (context, error, stackTrace) => const Icon(
+              CupertinoIcons.check_mark_circled_solid,
+              color: AppColors.success,
+              size: 80,
+            ),
+          ),
         ),
         content: Text(
           isMarathi
@@ -384,379 +403,413 @@ class _TreeFormWidgetState extends State<TreeFormWidget>
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Tree Name Section
-            Text(
-              isMarathi ? 'झाडाची प्रजाती / नाव' : 'Tree Species / Name',
-              style: GoogleFonts.outfit(
-                fontSize: 15,
-                fontWeight: FontWeight.w600,
-                color: AppColors.textPrimary,
-              ),
-            ),
-            const SizedBox(height: 10),
-            TextField(
-              controller: _treeNameController,
-              style:
-                  GoogleFonts.inter(fontSize: 15, color: AppColors.textPrimary),
-              decoration: InputDecoration(
-                hintText: isMarathi
-                    ? 'उदा. वड, कडुलिंब, आंबा...'
-                    : 'e.g. Banyan, Neem, Mango...',
-                hintStyle: GoogleFonts.inter(
-                  color: Colors.grey.shade400,
-                  fontSize: 14,
-                ),
-                prefixIcon: const Icon(
-                  CupertinoIcons.leaf_arrow_circlepath,
-                  color: AppColors.primary,
-                  size: 22,
-                ),
-                filled: true,
-                fillColor: const Color(0xFFF9FAFB),
-                contentPadding: const EdgeInsets.symmetric(vertical: 16),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(16),
-                  borderSide: BorderSide.none,
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(16),
-                  borderSide:
-                      const BorderSide(color: AppColors.primary, width: 1.5),
-                ),
-              ),
-            ),
+            _buildTreeNameSection(isMarathi),
             const SizedBox(height: 28),
-
-            // Quantity Section
-            Text(
-              isMarathi
-                  ? 'आज तुम्ही किती झाडे लावली?'
-                  : 'How many trees did you plant today?',
-              style: GoogleFonts.outfit(
-                fontSize: 15,
-                fontWeight: FontWeight.w600,
-                color: AppColors.textPrimary,
-              ),
-            ),
-            const SizedBox(height: 10),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-              decoration: BoxDecoration(
-                color: const Color(0xFFF9FAFB),
-                borderRadius: BorderRadius.circular(16),
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  IconButton(
-                    icon: const Icon(CupertinoIcons.minus_circle_fill),
-                    color: _quantity > 1
-                        ? AppColors.primary
-                        : Colors.grey.shade400,
-                    iconSize: 28,
-                    onPressed: () {
-                      if (_quantity > 1) setState(() => _quantity--);
-                    },
-                  ),
-                  Text(
-                    '$_quantity',
-                    style: GoogleFonts.outfit(
-                      fontSize: 28,
-                      fontWeight: FontWeight.bold,
-                      color: AppColors.textPrimary,
-                    ),
-                  ),
-                  IconButton(
-                    icon: const Icon(CupertinoIcons.plus_circle_fill),
-                    color: AppColors.primary,
-                    iconSize: 28,
-                    onPressed: () {
-                      setState(() => _quantity++);
-                    },
-                  ),
-                ],
-              ),
-            ),
+            _buildQuantitySection(isMarathi),
             const SizedBox(height: 28),
-
-            // Date Section
-            Text(
-              isMarathi ? 'लागवडीची तारीख' : 'Date of Planting',
-              style: GoogleFonts.outfit(
-                fontSize: 15,
-                fontWeight: FontWeight.w600,
-                color: AppColors.textPrimary,
-              ),
-            ),
-            const SizedBox(height: 10),
-            InkWell(
-              onTap: () => _selectDate(context),
-              borderRadius: BorderRadius.circular(16),
-              child: Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFF9FAFB),
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                child: Row(
-                  children: [
-                    const Icon(
-                      CupertinoIcons.calendar,
-                      color: AppColors.primary,
-                      size: 22,
-                    ),
-                    const SizedBox(width: 12),
-                    Text(
-                      DateFormat('MMMM dd, yyyy').format(_selectedDate),
-                      style: GoogleFonts.inter(
-                        fontSize: 15,
-                        color: AppColors.textPrimary,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
+            _buildDateSection(isMarathi),
             const SizedBox(height: 28),
-
-            // Location Section
-            Text(
-              isMarathi ? 'ठिकाण' : 'Location',
-              style: GoogleFonts.outfit(
-                fontSize: 15,
-                fontWeight: FontWeight.w600,
-                color: AppColors.textPrimary,
-              ),
-            ),
-            const SizedBox(height: 10),
-            TextField(
-              controller: _locationController,
-              readOnly: true,
-              onTap: () async {
-                final result = await Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => const LocationPickerScreen(),
-                  ),
-                );
-                if (result != null && result is Map<String, dynamic>) {
-                  setState(() {
-                    _locationController.text = result['address'] as String;
-                    _pickedLat = result['lat'] as double;
-                    _pickedLon = result['lon'] as double;
-                  });
-                }
-              },
-              style:
-                  GoogleFonts.inter(fontSize: 15, color: AppColors.textPrimary),
-              decoration: InputDecoration(
-                hintText: isMarathi
-                    ? 'नकाशावरून ठिकाण निवडा'
-                    : 'Pick location from map',
-                hintStyle: GoogleFonts.inter(
-                  color: Colors.grey.shade400,
-                  fontSize: 14,
-                ),
-                prefixIcon: const Icon(
-                  CupertinoIcons.location_solid,
-                  color: AppColors.primary,
-                  size: 22,
-                ),
-                suffixIcon: _isAutoFetching
-                    ? const Padding(
-                        padding: EdgeInsets.all(12.0),
-                        child: SizedBox(
-                          width: 20,
-                          height: 20,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            color: AppColors.primary,
-                          ),
-                        ),
-                      )
-                    : null,
-                filled: true,
-                fillColor: const Color(0xFFF9FAFB),
-                contentPadding: const EdgeInsets.symmetric(vertical: 16),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(16),
-                  borderSide: BorderSide.none,
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(16),
-                  borderSide:
-                      const BorderSide(color: AppColors.primary, width: 1.5),
-                ),
-              ),
-            ),
+            _buildLocationSection(isMarathi),
             const SizedBox(height: 28),
-
-            // Photo Upload Section
-            Text(
-              isMarathi ? 'झाडाचा फोटो जोडा' : 'Add a Photo of the Tree',
-              style: GoogleFonts.outfit(
-                fontSize: 15,
-                fontWeight: FontWeight.w600,
-                color: AppColors.textPrimary,
-              ),
-            ),
-            const SizedBox(height: 10),
-            GestureDetector(
-              onTap: _pickImage,
-              child: Container(
-                height: 160,
-                width: double.infinity,
-                decoration: BoxDecoration(
-                  color: _selectedImage == null
-                      ? const Color(0xFFF3F4F6)
-                      : Colors.black,
-                  borderRadius: BorderRadius.circular(20),
-                  image: _selectedImage != null
-                      ? DecorationImage(
-                          image: FileImage(_selectedImage!),
-                          fit: BoxFit.cover,
-                        )
-                      : null,
-                ),
-                child: _selectedImage == null
-                    ? Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.all(16),
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              shape: BoxShape.circle,
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.black.withValues(alpha: 0.05),
-                                  blurRadius: 10,
-                                  offset: const Offset(0, 4),
-                                ),
-                              ],
-                            ),
-                            child: const Icon(
-                              CupertinoIcons.camera_fill,
-                              size: 32,
-                              color: AppColors.primary,
-                            ),
-                          ),
-                          const SizedBox(height: 12),
-                          Text(
-                            isMarathi
-                                ? 'फोटो काढण्यासाठी टॅप करा'
-                                : 'Tap to take a live photo',
-                            style: GoogleFonts.inter(
-                              color: AppColors.textSecondary,
-                              fontWeight: FontWeight.w500,
-                              fontSize: 14,
-                            ),
-                          ),
-                        ],
-                      )
-                    : Align(
-                        alignment: Alignment.topRight,
-                        child: Padding(
-                          padding: const EdgeInsets.all(12.0),
-                          child: GestureDetector(
-                            onTap: () => setState(() => _selectedImage = null),
-                            child: Container(
-                              padding: const EdgeInsets.all(6),
-                              decoration: BoxDecoration(
-                                color: Colors.black.withValues(alpha: 0.6),
-                                shape: BoxShape.circle,
-                              ),
-                              child: const Icon(
-                                Icons.close,
-                                size: 20,
-                                color: Colors.white,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-              ),
-            ),
+            _buildPhotoUploadSection(isMarathi),
             const SizedBox(height: 32),
-
-            // 6-Month Tracking Notice
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: const Color(0xFFF0FDF4),
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: const Color(0xFFBBF7D0)),
-              ),
-              child: Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: const BoxDecoration(
-                      color: Color(0xFFDCFCE7),
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Icon(
-                      CupertinoIcons.time,
-                      color: Color(0xFF166534),
-                      size: 20,
-                    ),
-                  ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: Text(
-                      isMarathi
-                          ? 'या रोपाच्या प्रगतीचा मागोवा घेण्यासाठी "६-महिन्यांचा वाढीचा फोटो" स्लॉट ${DateFormat('MMM dd, yyyy').format(_selectedDate.add(const Duration(days: 180)))} रोजी उघडेल.'
-                          : 'A slot for a "6-Month Growth Photo" will open on ${DateFormat('MMM dd, yyyy').format(_selectedDate.add(const Duration(days: 180)))} to track this plant\'s progress.',
-                      style: GoogleFonts.inter(
-                        color: const Color(0xFF166534),
-                        fontSize: 13,
-                        height: 1.4,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-
+            _buildTrackingNotice(isMarathi),
             const SizedBox(height: 40),
-
-            // Submit Button
-            SizedBox(
-              width: double.infinity,
-              height: 56,
-              child: ElevatedButton(
-                onPressed: _isSubmitting ? null : _submitForm,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primary,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  elevation: 4,
-                  shadowColor: AppColors.primary.withValues(alpha: 0.4),
-                ),
-                child: _isSubmitting
-                    ? const SizedBox(
-                        height: 24,
-                        width: 24,
-                        child: CircularProgressIndicator(
-                          color: Colors.white,
-                          strokeWidth: 2,
-                        ),
-                      )
-                    : Text(
-                        isMarathi ? 'नोंद करा' : 'Record Planting',
-                        style: GoogleFonts.outfit(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white,
-                        ),
-                      ),
-              ),
-            ),
+            _buildSubmitButton(isMarathi),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildTreeNameSection(bool isMarathi) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          isMarathi ? 'झाडाची प्रजाती / नाव' : 'Tree Species / Name',
+          style: GoogleFonts.outfit(
+            fontSize: 15,
+            fontWeight: FontWeight.w600,
+            color: AppColors.textPrimary,
+          ),
+        ),
+        const SizedBox(height: 10),
+        TextField(
+          controller: _treeNameController,
+          style: GoogleFonts.inter(fontSize: 15, color: AppColors.textPrimary),
+          decoration: InputDecoration(
+            hintText: isMarathi
+                ? 'उदा. वड, कडुलिंब, आंबा...'
+                : 'e.g. Banyan, Neem, Mango...',
+            hintStyle: GoogleFonts.inter(
+              color: Colors.grey.shade400,
+              fontSize: 14,
+            ),
+            prefixIcon: const Icon(
+              CupertinoIcons.leaf_arrow_circlepath,
+              color: AppColors.primary,
+              size: 22,
+            ),
+            filled: true,
+            fillColor: const Color(0xFFF9FAFB),
+            contentPadding: const EdgeInsets.symmetric(vertical: 16),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(16),
+              borderSide: BorderSide.none,
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(16),
+              borderSide:
+                  const BorderSide(color: AppColors.primary, width: 1.5),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildQuantitySection(bool isMarathi) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          isMarathi
+              ? 'आज तुम्ही किती झाडे लावली?'
+              : 'How many trees did you plant today?',
+          style: GoogleFonts.outfit(
+            fontSize: 15,
+            fontWeight: FontWeight.w600,
+            color: AppColors.textPrimary,
+          ),
+        ),
+        const SizedBox(height: 10),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+          decoration: BoxDecoration(
+            color: const Color(0xFFF9FAFB),
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              IconButton(
+                icon: const Icon(CupertinoIcons.minus_circle_fill),
+                color: _quantity > 1 ? AppColors.primary : Colors.grey.shade400,
+                iconSize: 28,
+                onPressed: () {
+                  if (_quantity > 1) setState(() => _quantity--);
+                },
+              ),
+              Text(
+                '$_quantity',
+                style: GoogleFonts.outfit(
+                  fontSize: 28,
+                  fontWeight: FontWeight.bold,
+                  color: AppColors.textPrimary,
+                ),
+              ),
+              IconButton(
+                icon: const Icon(CupertinoIcons.plus_circle_fill),
+                color: AppColors.primary,
+                iconSize: 28,
+                onPressed: () {
+                  setState(() => _quantity++);
+                },
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildDateSection(bool isMarathi) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          isMarathi ? 'लागवडीची तारीख' : 'Date of Planting',
+          style: GoogleFonts.outfit(
+            fontSize: 15,
+            fontWeight: FontWeight.w600,
+            color: AppColors.textPrimary,
+          ),
+        ),
+        const SizedBox(height: 10),
+        InkWell(
+          onTap: () => _selectDate(context),
+          borderRadius: BorderRadius.circular(16),
+          child: Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: const Color(0xFFF9FAFB),
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: Row(
+              children: [
+                const Icon(
+                  CupertinoIcons.calendar,
+                  color: AppColors.primary,
+                  size: 22,
+                ),
+                const SizedBox(width: 12),
+                Text(
+                  DateFormat('MMMM dd, yyyy').format(_selectedDate),
+                  style: GoogleFonts.inter(
+                    fontSize: 15,
+                    color: AppColors.textPrimary,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildLocationSection(bool isMarathi) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          isMarathi ? 'ठिकाण' : 'Location',
+          style: GoogleFonts.outfit(
+            fontSize: 15,
+            fontWeight: FontWeight.w600,
+            color: AppColors.textPrimary,
+          ),
+        ),
+        const SizedBox(height: 10),
+        TextField(
+          controller: _locationController,
+          readOnly: true,
+          onTap: () async {
+            final result = await Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => const LocationPickerScreen(),
+              ),
+            );
+            if (result != null && result is Map<String, dynamic>) {
+              setState(() {
+                _locationController.text = result['address'] as String;
+                _pickedLat = result['lat'] as double;
+                _pickedLon = result['lon'] as double;
+              });
+            }
+          },
+          style: GoogleFonts.inter(fontSize: 15, color: AppColors.textPrimary),
+          decoration: InputDecoration(
+            hintText:
+                isMarathi ? 'नकाशावरून ठिकाण निवडा' : 'Pick location from map',
+            hintStyle: GoogleFonts.inter(
+              color: Colors.grey.shade400,
+              fontSize: 14,
+            ),
+            prefixIcon: const Icon(
+              CupertinoIcons.location_solid,
+              color: AppColors.primary,
+              size: 22,
+            ),
+            suffixIcon: _isAutoFetching
+                ? const Padding(
+                    padding: EdgeInsets.all(12.0),
+                    child: SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: AppColors.primary,
+                      ),
+                    ),
+                  )
+                : null,
+            filled: true,
+            fillColor: const Color(0xFFF9FAFB),
+            contentPadding: const EdgeInsets.symmetric(vertical: 16),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(16),
+              borderSide: BorderSide.none,
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(16),
+              borderSide:
+                  const BorderSide(color: AppColors.primary, width: 1.5),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildPhotoUploadSection(bool isMarathi) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          isMarathi ? 'झाडाचा फोटो जोडा' : 'Add a Photo of the Tree',
+          style: GoogleFonts.outfit(
+            fontSize: 15,
+            fontWeight: FontWeight.w600,
+            color: AppColors.textPrimary,
+          ),
+        ),
+        const SizedBox(height: 10),
+        GestureDetector(
+          onTap: _pickImage,
+          child: Container(
+            height: 160,
+            width: double.infinity,
+            decoration: BoxDecoration(
+              color: _selectedImage == null
+                  ? const Color(0xFFF3F4F6)
+                  : Colors.black,
+              borderRadius: BorderRadius.circular(20),
+              image: _selectedImage != null
+                  ? DecorationImage(
+                      image: FileImage(_selectedImage!),
+                      fit: BoxFit.cover,
+                    )
+                  : null,
+            ),
+            child: _selectedImage == null
+                ? Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          shape: BoxShape.circle,
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withValues(alpha: 0.05),
+                              blurRadius: 10,
+                              offset: const Offset(0, 4),
+                            ),
+                          ],
+                        ),
+                        child: const Icon(
+                          CupertinoIcons.camera_fill,
+                          size: 32,
+                          color: AppColors.primary,
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      Text(
+                        isMarathi
+                            ? 'फोटो काढण्यासाठी टॅप करा'
+                            : 'Tap to take a live photo',
+                        style: GoogleFonts.inter(
+                          color: AppColors.textSecondary,
+                          fontWeight: FontWeight.w500,
+                          fontSize: 14,
+                        ),
+                      ),
+                    ],
+                  )
+                : Align(
+                    alignment: Alignment.topRight,
+                    child: Padding(
+                      padding: const EdgeInsets.all(12.0),
+                      child: GestureDetector(
+                        onTap: () => setState(() => _selectedImage = null),
+                        child: Container(
+                          padding: const EdgeInsets.all(6),
+                          decoration: BoxDecoration(
+                            color: Colors.black.withValues(alpha: 0.6),
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(
+                            Icons.close,
+                            size: 20,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildTrackingNotice(bool isMarathi) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF0FDF4),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFBBF7D0)),
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: const BoxDecoration(
+              color: Color(0xFFDCFCE7),
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(
+              CupertinoIcons.time,
+              color: Color(0xFF166534),
+              size: 20,
+            ),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Text(
+              isMarathi
+                  ? 'या रोपाच्या प्रगतीचा मागोवा घेण्यासाठी "६-महिन्यांचा वाढीचा फोटो" स्लॉट ${DateFormat('MMM dd, yyyy').format(_selectedDate.add(const Duration(days: 180)))} रोजी उघडेल.'
+                  : 'A slot for a "6-Month Growth Photo" will open on ${DateFormat('MMM dd, yyyy').format(_selectedDate.add(const Duration(days: 180)))} to track this plant\'s progress.',
+              style: GoogleFonts.inter(
+                color: const Color(0xFF166534),
+                fontSize: 13,
+                height: 1.4,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSubmitButton(bool isMarathi) {
+    return SizedBox(
+      width: double.infinity,
+      height: 56,
+      child: ElevatedButton(
+        onPressed: _isSubmitting ? null : _submitForm,
+        style: ElevatedButton.styleFrom(
+          backgroundColor: AppColors.primary,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          elevation: 4,
+          shadowColor: AppColors.primary.withValues(alpha: 0.4),
+        ),
+        child: _isSubmitting
+            ? const SizedBox(
+                height: 24,
+                width: 24,
+                child: CircularProgressIndicator(
+                  color: Colors.white,
+                  strokeWidth: 2,
+                ),
+              )
+            : Text(
+                isMarathi ? 'नोंद करा' : 'Record Planting',
+                style: GoogleFonts.outfit(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                ),
+              ),
       ),
     );
   }

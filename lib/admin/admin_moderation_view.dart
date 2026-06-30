@@ -2,66 +2,287 @@ import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '../theme/app_colors.dart';
 
-class AdminModerationView extends StatelessWidget {
+class AdminModerationView extends StatefulWidget {
   const AdminModerationView({super.key});
 
   @override
+  State<AdminModerationView> createState() => _AdminModerationViewState();
+}
+
+class _AdminModerationViewState extends State<AdminModerationView> {
+  @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Padding(
-          padding: const EdgeInsets.fromLTRB(24, 32, 24, 16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Moderation Queue',
-                style: GoogleFonts.outfit(
-                  fontSize: 28,
-                  fontWeight: FontWeight.w900,
-                  color: AppColors.textPrimary,
-                  letterSpacing: -0.5,
-                ),
-              ).animate().fadeIn().slideX(begin: -0.1),
-              const SizedBox(height: 8),
-              Text(
-                'Review recent tree uploads to maintain data integrity.',
-                style: GoogleFonts.inter(
-                  fontSize: 15,
-                  color: AppColors.textSecondary,
-                  height: 1.4,
-                ),
-              ).animate().fadeIn(delay: 100.ms).slideX(begin: -0.1),
-            ],
+    return DefaultTabController(
+      length: 2,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(24, 32, 24, 16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Community Manager',
+                  style: GoogleFonts.outfit(
+                    fontSize: 28,
+                    fontWeight: FontWeight.w900,
+                    color: AppColors.textPrimary,
+                    letterSpacing: -0.5,
+                  ),
+                ).animate().fadeIn().slideX(begin: -0.1),
+                const SizedBox(height: 8),
+                Text(
+                  'Review tree uploads and manage user accounts.',
+                  style: GoogleFonts.inter(
+                    fontSize: 15,
+                    color: AppColors.textSecondary,
+                    height: 1.4,
+                  ),
+                ).animate().fadeIn(delay: 100.ms).slideX(begin: -0.1),
+              ],
+            ),
           ),
-        ),
-        Expanded(
-          child: ListView.builder(
-            padding:
-                const EdgeInsets.symmetric(horizontal: 24.0, vertical: 8.0),
-            itemCount: 3, // Mock pending photos
-            itemBuilder: (context, index) {
-              return _ModerationCard(index: index)
-                  .animate()
-                  .fadeIn(delay: Duration(milliseconds: 200 + (index * 150)))
-                  .slideY(begin: 0.2);
-            },
+          Container(
+            margin: const EdgeInsets.symmetric(horizontal: 24),
+            decoration: BoxDecoration(
+              color: Colors.grey.shade100,
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: TabBar(
+              indicator: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(12),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.05),
+                    blurRadius: 4,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              indicatorSize: TabBarIndicatorSize.tab,
+              labelColor: AppColors.textPrimary,
+              unselectedLabelColor: AppColors.textSecondary,
+              labelStyle: GoogleFonts.inter(fontWeight: FontWeight.bold),
+              unselectedLabelStyle:
+                  GoogleFonts.inter(fontWeight: FontWeight.w500),
+              tabs: const [
+                Tab(text: 'Moderation Queue'),
+                Tab(text: 'All Users'),
+              ],
+            ),
           ),
-        ),
-      ],
+          const SizedBox(height: 16),
+          Expanded(
+            child: TabBarView(
+              children: [
+                _buildModerationTab(),
+                const _UsersListTab(),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildModerationTab() {
+    return StreamBuilder<QuerySnapshot>(
+      stream: FirebaseFirestore.instance
+          .collection('planted_trees')
+          .orderBy('datePlanted', descending: true)
+          .snapshots(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(
+            child: CircularProgressIndicator(color: AppColors.primary),
+          );
+        }
+        if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+          return const Center(child: Text('No trees planted yet.'));
+        }
+
+        final docs = snapshot.data!.docs;
+
+        return ListView.builder(
+          padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 8.0),
+          itemCount: docs.length,
+          itemBuilder: (context, index) {
+            final data = docs[index].data() as Map<String, dynamic>;
+            return _ModerationCard(
+              index: index,
+              data: data,
+              docId: docs[index].id,
+            )
+                .animate()
+                .fadeIn(delay: Duration(milliseconds: 100 + (index * 50)))
+                .slideY(begin: 0.1);
+          },
+        );
+      },
+    );
+  }
+}
+
+class _UsersListTab extends StatelessWidget {
+  const _UsersListTab();
+
+  Future<void> _toggleUserStatus(String docId, String currentStatus) async {
+    final newStatus = currentStatus == 'banned' ? 'active' : 'banned';
+    await FirebaseFirestore.instance
+        .collection('users')
+        .doc(docId)
+        .update({'status': newStatus});
+  }
+
+  Future<void> _toggleUserRole(String docId, String currentRole) async {
+    final newRole = currentRole == 'admin' ? 'user' : 'admin';
+    await FirebaseFirestore.instance
+        .collection('users')
+        .doc(docId)
+        .update({'role': newRole});
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return StreamBuilder<QuerySnapshot>(
+      stream: FirebaseFirestore.instance.collection('users').snapshots(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(
+            child: CircularProgressIndicator(color: AppColors.primary),
+          );
+        }
+        if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+          return const Center(child: Text('No users found.'));
+        }
+
+        final docs = snapshot.data!.docs;
+
+        return ListView.builder(
+          padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 8.0),
+          itemCount: docs.length,
+          itemBuilder: (context, index) {
+            final data = docs[index].data() as Map<String, dynamic>;
+            final docId = docs[index].id;
+            final name = data['name'] ?? 'Unknown User';
+            final trees = data['totalTreesPlanted'] ?? 0;
+            final status = data['status'] ?? 'active';
+            final role = data['role'] ?? 'user';
+
+            final isBanned = status == 'banned';
+            final isAdmin = role == 'admin';
+
+            return Container(
+              margin: const EdgeInsets.only(bottom: 16),
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: Colors.grey.shade200),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.03),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: Row(
+                children: [
+                  CircleAvatar(
+                    backgroundColor: isBanned
+                        ? Colors.red.shade100
+                        : AppColors.primary.withValues(alpha: 0.2),
+                    child: Text(
+                      name[0].toUpperCase(),
+                      style: TextStyle(
+                        color: isBanned ? Colors.red : AppColors.primary,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          name,
+                          style: GoogleFonts.outfit(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16,
+                            decoration:
+                                isBanned ? TextDecoration.lineThrough : null,
+                          ),
+                        ),
+                        Text(
+                          '$trees Trees Planted',
+                          style: GoogleFonts.inter(
+                            color: Colors.grey.shade600,
+                            fontSize: 13,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  PopupMenuButton<String>(
+                    onSelected: (value) {
+                      if (value == 'ban') {
+                        _toggleUserStatus(docId, status);
+                      } else if (value == 'admin') {
+                        _toggleUserRole(docId, role);
+                      }
+                    },
+                    itemBuilder: (context) => [
+                      PopupMenuItem(
+                        value: 'ban',
+                        child: Text(
+                          isBanned ? 'Unban User' : 'Ban User',
+                          style: TextStyle(
+                            color: isBanned ? AppColors.primary : Colors.red,
+                          ),
+                        ),
+                      ),
+                      PopupMenuItem(
+                        value: 'admin',
+                        child: Text(isAdmin ? 'Revoke Admin' : 'Make Admin'),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            );
+          },
+        );
+      },
     );
   }
 }
 
 class _ModerationCard extends StatelessWidget {
   final int index;
-  const _ModerationCard({required this.index});
+  final Map<String, dynamic> data;
+  final String docId;
+
+  const _ModerationCard({
+    required this.index,
+    required this.data,
+    required this.docId,
+  });
 
   @override
   Widget build(BuildContext context) {
+    final String imageUrl = data['imageUrl'] ?? '';
+    final String userName = data['userName'] ?? 'Unknown User';
+    final String location = data['location'] ?? 'Unknown Location';
+    final String speciesName = data['speciesName'] ?? 'Tree';
+    final int quantity = data['quantity'] ?? 1;
+
     return Container(
       margin: const EdgeInsets.only(bottom: 24),
       decoration: BoxDecoration(
@@ -87,28 +308,35 @@ class _ModerationCard extends StatelessWidget {
                   height: 220,
                   width: double.infinity,
                   color: Colors.grey.shade900,
-                  child: Stack(
-                    alignment: Alignment.center,
-                    children: [
-                      const Icon(
-                        CupertinoIcons.tree,
-                        size: 80,
-                        color: Colors.white24,
-                      ),
-                      // Mock nature background color
-                      Container(
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            colors: [
-                              Colors.transparent,
-                              Colors.black.withValues(alpha: 0.8),
-                            ],
-                            begin: Alignment.topCenter,
-                            end: Alignment.bottomCenter,
+                  child: imageUrl.isNotEmpty
+                      ? Image.network(
+                          imageUrl,
+                          fit: BoxFit.cover,
+                          errorBuilder: (context, error, stackTrace) =>
+                              const Icon(
+                            CupertinoIcons.tree,
+                            size: 80,
+                            color: Colors.white24,
                           ),
+                        )
+                      : const Icon(
+                          CupertinoIcons.tree,
+                          size: 80,
+                          color: Colors.white24,
                         ),
-                      ),
-                    ],
+                ),
+                // Gradient overlay
+                Container(
+                  height: 220,
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [
+                        Colors.transparent,
+                        Colors.black.withValues(alpha: 0.8),
+                      ],
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                    ),
                   ),
                 ),
                 Positioned(
@@ -118,21 +346,21 @@ class _ModerationCard extends StatelessWidget {
                     padding:
                         const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                     decoration: BoxDecoration(
-                      color: Colors.orange.shade500,
+                      color: AppColors.primary,
                       borderRadius: BorderRadius.circular(20),
                     ),
-                    child: const Row(
+                    child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Icon(
-                          CupertinoIcons.time,
+                        const Icon(
+                          CupertinoIcons.tree,
                           color: Colors.white,
                           size: 14,
                         ),
-                        SizedBox(width: 4),
+                        const SizedBox(width: 4),
                         Text(
-                          'Pending',
-                          style: TextStyle(
+                          '$quantity $speciesName',
+                          style: const TextStyle(
                             color: Colors.white,
                             fontWeight: FontWeight.bold,
                             fontSize: 12,
@@ -149,7 +377,7 @@ class _ModerationCard extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Priya Patel',
+                        userName,
                         style: GoogleFonts.outfit(
                           fontSize: 22,
                           fontWeight: FontWeight.bold,
@@ -166,7 +394,7 @@ class _ModerationCard extends StatelessWidget {
                           ),
                           const SizedBox(width: 4),
                           Text(
-                            'Pune, Maharashtra',
+                            location,
                             style: GoogleFonts.inter(
                               fontSize: 14,
                               color: Colors.white70,
@@ -188,7 +416,7 @@ class _ModerationCard extends StatelessWidget {
                       onPressed: () {
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(
-                            content: Text('Tree Rejected and removed.'),
+                            content: Text('Tree Rejected! (UI Only for now)'),
                           ),
                         );
                       },
@@ -221,7 +449,7 @@ class _ModerationCard extends StatelessWidget {
                       onPressed: () {
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(
-                            content: Text('Tree Approved! Added to Map.'),
+                            content: Text('Tree Approved! (UI Only for now)'),
                           ),
                         );
                       },

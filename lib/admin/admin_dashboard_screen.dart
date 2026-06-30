@@ -2,12 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '../providers/auth_provider.dart';
 import '../theme/app_colors.dart';
 import 'admin_stats_view.dart';
-import 'admin_moderation_view.dart';
 import 'admin_campaign_view.dart';
+import 'admin_moderation_view.dart';
 import 'admin_settings_view.dart';
+import 'admin_nursery_registration_sheet.dart';
+import 'admin_nurseries_list_screen.dart';
 
 class AdminDashboardScreen extends StatefulWidget {
   const AdminDashboardScreen({super.key});
@@ -27,6 +30,156 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
     const AdminCampaignView(), // Campaigns
     const AdminSettingsView(), // Settings
   ];
+
+  void _showNotifications() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (context) => Container(
+        height: MediaQuery.of(context).size.height * 0.6,
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        ),
+        child: Column(
+          children: [
+            const SizedBox(height: 12),
+            Container(
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: Colors.grey.shade300,
+                borderRadius: BorderRadius.circular(4),
+              ),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'Admin Notifications',
+              style: GoogleFonts.outfit(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+                color: AppColors.textPrimary,
+              ),
+            ),
+            const Divider(height: 32),
+            Expanded(
+              child: StreamBuilder<QuerySnapshot>(
+                stream: FirebaseFirestore.instance
+                    .collection('planted_trees')
+                    .orderBy('plantedAt', descending: true)
+                    .limit(20)
+                    .snapshots(),
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return const Center(
+                      child: CircularProgressIndicator(
+                        color: Color(0xFF1B8A44),
+                      ),
+                    );
+                  }
+                  if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+                    return const Center(child: Text('No new notifications.'));
+                  }
+
+                  return ListView.separated(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                    itemCount: snapshot.data!.docs.length,
+                    separatorBuilder: (context, index) =>
+                        const Divider(height: 24),
+                    itemBuilder: (context, index) {
+                      final data = snapshot.data!.docs[index].data()
+                          as Map<String, dynamic>;
+                      final userName = data['userName'] ?? 'Unknown User';
+                      final quantity = data['quantity'] ?? 1;
+                      final type = data['treeType'] ?? 'Tree';
+
+                      String timeStr = 'Just now';
+                      if (data['plantedAt'] != null) {
+                        final DateTime date =
+                            (data['plantedAt'] as Timestamp).toDate();
+                        final diff = DateTime.now().difference(date);
+                        if (diff.inMinutes < 60) {
+                          timeStr = '${diff.inMinutes} min ago';
+                        } else if (diff.inHours < 24) {
+                          timeStr = '${diff.inHours} hours ago';
+                        } else {
+                          timeStr = '${diff.inDays} days ago';
+                        }
+                      }
+
+                      return Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(10),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF1B8A44)
+                                  .withValues(alpha: 0.1),
+                              shape: BoxShape.circle,
+                            ),
+                            child: const Icon(
+                              CupertinoIcons.tree,
+                              color: Color(0xFF1B8A44),
+                              size: 20,
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                RichText(
+                                  text: TextSpan(
+                                    style: GoogleFonts.inter(
+                                      color: AppColors.textPrimary,
+                                      fontSize: 14,
+                                    ),
+                                    children: [
+                                      TextSpan(
+                                        text: userName,
+                                        style: const TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                      const TextSpan(
+                                        text: ' successfully planted ',
+                                      ),
+                                      TextSpan(
+                                        text: '$quantity $type',
+                                        style: const TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          color: Color(0xFF1B8A44),
+                                        ),
+                                      ),
+                                      const TextSpan(text: '!'),
+                                    ],
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  timeStr,
+                                  style: GoogleFonts.inter(
+                                    color: Colors.grey,
+                                    fontSize: 12,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      );
+                    },
+                  );
+                },
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -100,27 +253,48 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                               ),
                             ],
                           ),
-                          Stack(
+                          Row(
+                            mainAxisSize: MainAxisSize.min,
                             children: [
                               IconButton(
                                 icon: const Icon(
-                                  CupertinoIcons.bell,
+                                  CupertinoIcons.tree,
                                   color: Colors.white,
                                   size: 26,
                                 ),
-                                onPressed: () {},
+                                onPressed: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) =>
+                                          const AdminNurseriesListScreen(),
+                                    ),
+                                  );
+                                },
                               ),
-                              Positioned(
-                                right: 10,
-                                top: 10,
-                                child: Container(
-                                  width: 10,
-                                  height: 10,
-                                  decoration: const BoxDecoration(
-                                    color: Colors.redAccent,
-                                    shape: BoxShape.circle,
+                              Stack(
+                                children: [
+                                  IconButton(
+                                    icon: const Icon(
+                                      CupertinoIcons.bell,
+                                      color: Colors.white,
+                                      size: 26,
+                                    ),
+                                    onPressed: _showNotifications,
                                   ),
-                                ),
+                                  Positioned(
+                                    right: 10,
+                                    top: 10,
+                                    child: Container(
+                                      width: 10,
+                                      height: 10,
+                                      decoration: const BoxDecoration(
+                                        color: Colors.redAccent,
+                                        shape: BoxShape.circle,
+                                      ),
+                                    ),
+                                  ),
+                                ],
                               ),
                             ],
                           ),
@@ -144,7 +318,14 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
         ],
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () {},
+        onPressed: () {
+          showModalBottomSheet(
+            context: context,
+            isScrollControlled: true,
+            backgroundColor: Colors.transparent,
+            builder: (context) => const AdminNurseryRegistrationSheet(),
+          );
+        },
         backgroundColor: const Color(0xFF1B8A44),
         shape: const CircleBorder(),
         child: const Icon(Icons.add, color: Colors.white, size: 32),
@@ -247,9 +428,9 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                   radius: 30,
                   backgroundColor: Colors.white,
                   child: Icon(
-                    CupertinoIcons.shield_fill,
+                    CupertinoIcons.tree,
                     color: Color(0xFF165A31),
-                    size: 30,
+                    size: 32,
                   ),
                 ),
                 const SizedBox(height: 16),

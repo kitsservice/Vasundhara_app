@@ -3,6 +3,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
+import 'admin_nurseries_list_screen.dart';
 
 class AdminSettingsView extends StatelessWidget {
   const AdminSettingsView({super.key});
@@ -76,6 +77,46 @@ class AdminSettingsView extends StatelessWidget {
                     size: 16,
                     color: Colors.grey,
                   ),
+                ),
+                const Divider(height: 1, indent: 70),
+                ListTile(
+                  contentPadding:
+                      const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                  leading: Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: const BoxDecoration(
+                      color: Color(0xFFE0F2FE),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(
+                      CupertinoIcons.tree,
+                      color: Color(0xFF0369A1),
+                    ),
+                  ),
+                  title: Text(
+                    'Manage Nurseries',
+                    style: GoogleFonts.inter(
+                      fontWeight: FontWeight.bold,
+                      color: const Color(0xFF1F2937),
+                    ),
+                  ),
+                  subtitle: Text(
+                    'View or delete registered nurseries',
+                    style: GoogleFonts.inter(fontSize: 12),
+                  ),
+                  trailing: const Icon(
+                    CupertinoIcons.chevron_right,
+                    size: 16,
+                    color: Colors.grey,
+                  ),
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const AdminNurseriesListScreen(),
+                      ),
+                    );
+                  },
                 ),
                 const Divider(height: 1, indent: 70),
                 ListTile(

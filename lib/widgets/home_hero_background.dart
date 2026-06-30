@@ -5,7 +5,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import '../theme/app_colors.dart';
-import '../screens/plant_tree_screen.dart';
+import '../screens/core/plant_tree_screen.dart';
 import '../providers/user_provider.dart';
 
 class HomeHeroBackground extends StatelessWidget {
@@ -185,11 +185,12 @@ class HomeHeroBackground extends StatelessWidget {
             decoration: BoxDecoration(
               color: Colors.white,
               borderRadius: BorderRadius.circular(24),
+              border: Border.all(color: Colors.black.withValues(alpha: 0.03)),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.08),
-                  blurRadius: 24,
-                  offset: const Offset(0, 8),
+                  color: Colors.black.withValues(alpha: 0.04),
+                  blurRadius: 30,
+                  offset: const Offset(0, 15),
                 ),
               ],
             ),
@@ -254,13 +255,12 @@ class HomeHeroBackground extends StatelessWidget {
                       ),
                     ),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF166534),
+                      backgroundColor: AppColors.primary, // Deep Forest
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(16),
                       ),
-                      elevation: 4,
-                      shadowColor:
-                          const Color(0xFF166534).withValues(alpha: 0.5),
+                      elevation: 8,
+                      shadowColor: AppColors.primary.withValues(alpha: 0.6),
                     ),
                   ),
                 ),

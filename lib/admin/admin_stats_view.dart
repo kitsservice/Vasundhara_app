@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class AdminStatsView extends StatelessWidget {
   const AdminStatsView({super.key});
@@ -130,60 +131,96 @@ class AdminStatsView extends StatelessWidget {
           // 2x2 Grid
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 20.0),
-            child: Column(
-              children: [
-                Row(
-                  children: [
-                    Expanded(
-                      child: _buildGridCard(
-                        'Total Trees Planted',
-                        '12,450',
-                        '+ 18.6%',
-                        CupertinoIcons.tree,
-                        const Color(0xFF16A34A),
-                        const Color(0xFFF0FDF4),
-                      ),
-                    ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: _buildGridCard(
-                        'Trees Survived',
-                        '10,230',
-                        '+ 15.3%',
-                        CupertinoIcons.tree,
-                        const Color(0xFF3B82F6),
-                        const Color(0xFFEFF6FF),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 16),
-                Row(
-                  children: [
-                    Expanded(
-                      child: _buildGridCard(
-                        'Locations',
-                        '258',
-                        '+ 8.4%',
-                        CupertinoIcons.location_solid,
-                        const Color(0xFFF59E0B),
-                        const Color(0xFFFFFBEB),
-                      ),
-                    ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: _buildGridCard(
-                        'Active Users',
-                        '1,245',
-                        '+ 22.1%',
-                        CupertinoIcons.person_2_fill,
-                        const Color(0xFF8B5CF6),
-                        const Color(0xFFF5F3FF),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
+            child: StreamBuilder<QuerySnapshot>(
+              stream:
+                  FirebaseFirestore.instance.collection('users').snapshots(),
+              builder: (context, userSnapshot) {
+                final userCount =
+                    userSnapshot.hasData ? userSnapshot.data!.docs.length : 0;
+
+                return StreamBuilder<QuerySnapshot>(
+                  stream: FirebaseFirestore.instance
+                      .collection('planted_trees')
+                      .snapshots(),
+                  builder: (context, treeSnapshot) {
+                    int totalTrees = 0;
+                    int totalLocations = 0;
+
+                    if (treeSnapshot.hasData) {
+                      final docs = treeSnapshot.data!.docs;
+                      for (var doc in docs) {
+                        final data = doc.data() as Map<String, dynamic>;
+                        totalTrees += (data['quantity'] as num?)?.toInt() ?? 1;
+                      }
+
+                      // Count unique locations (latitude/longitude roughly)
+                      final locations = docs.map((d) {
+                        final data = d.data() as Map<String, dynamic>;
+                        return '${data['latitude']}_${data['longitude']}';
+                      }).toSet();
+                      totalLocations = locations.length;
+                    }
+
+                    return Column(
+                      children: [
+                        Row(
+                          children: [
+                            Expanded(
+                              child: _buildGridCard(
+                                'Total Trees Planted',
+                                NumberFormat('#,###').format(totalTrees),
+                                'Real-time',
+                                CupertinoIcons.tree,
+                                const Color(0xFF16A34A),
+                                const Color(0xFFF0FDF4),
+                              ),
+                            ),
+                            const SizedBox(width: 16),
+                            Expanded(
+                              child: _buildGridCard(
+                                'Trees Survived',
+                                NumberFormat('#,###').format(
+                                  (totalTrees * 0.85).round(),
+                                ), // Mock survival rate for now
+                                '~85%',
+                                CupertinoIcons.tree,
+                                const Color(0xFF3B82F6),
+                                const Color(0xFFEFF6FF),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 16),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: _buildGridCard(
+                                'Locations',
+                                totalLocations.toString(),
+                                'Live',
+                                CupertinoIcons.location_solid,
+                                const Color(0xFFF59E0B),
+                                const Color(0xFFFFFBEB),
+                              ),
+                            ),
+                            const SizedBox(width: 16),
+                            Expanded(
+                              child: _buildGridCard(
+                                'Active Users',
+                                userCount.toString(),
+                                'Live',
+                                CupertinoIcons.person_2_fill,
+                                const Color(0xFF8B5CF6),
+                                const Color(0xFFF5F3FF),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    );
+                  },
+                );
+              },
             ),
           ),
 
@@ -279,73 +316,82 @@ class AdminStatsView extends StatelessWidget {
           const SizedBox(height: 16),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 20.0),
-            child: Container(
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(20),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.03),
-                    blurRadius: 10,
-                    offset: const Offset(0, 4),
+            child: StreamBuilder<QuerySnapshot>(
+              stream: FirebaseFirestore.instance
+                  .collection('planted_trees')
+                  .orderBy('plantedAt', descending: true)
+                  .limit(5)
+                  .snapshots(),
+              builder: (context, snapshot) {
+                if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+                  return Container(
+                    padding: const EdgeInsets.all(20),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: const Center(child: Text('No recent activities.')),
+                  );
+                }
+
+                return Container(
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(20),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.03),
+                        blurRadius: 10,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
                   ),
-                ],
-              ),
-              child: Column(
-                children: [
-                  _buildActivityRow(
-                    icon: CupertinoIcons.tree,
-                    iconBg: const Color(0xFFE8F5E9),
-                    iconColor: const Color(0xFF2E7D32),
-                    title: '100 Trees Planted',
-                    subtitle: 'Green City Campaign',
-                    location: 'Nagpur, Maharashtra',
-                    time: '2 min ago',
-                    status: 'Approved',
-                    statusColor: const Color(0xFF16A34A),
-                    statusBg: const Color(0xFFDCFCE7),
+                  child: Column(
+                    children: snapshot.data!.docs.map((doc) {
+                      final data = doc.data() as Map<String, dynamic>;
+                      final quantity = data['quantity'] ?? 1;
+                      final userName = data['userName'] ?? 'Unknown User';
+                      final type = data['treeType'] ?? 'Tree';
+
+                      // Calculate time ago (approx)
+                      String timeStr = 'Just now';
+                      if (data['plantedAt'] != null) {
+                        final DateTime date =
+                            (data['plantedAt'] as Timestamp).toDate();
+                        final diff = DateTime.now().difference(date);
+                        if (diff.inMinutes < 60) {
+                          timeStr = '${diff.inMinutes} min ago';
+                        } else if (diff.inHours < 24) {
+                          timeStr = '${diff.inHours} hours ago';
+                        } else {
+                          timeStr = '${diff.inDays} days ago';
+                        }
+                      }
+
+                      final isLast = doc == snapshot.data!.docs.last;
+
+                      return Column(
+                        children: [
+                          _buildActivityRow(
+                            icon: CupertinoIcons.tree,
+                            iconBg: const Color(0xFFE8F5E9),
+                            iconColor: const Color(0xFF2E7D32),
+                            title: '$quantity $type Planted',
+                            subtitle: 'By $userName',
+                            location: 'Live App Upload',
+                            time: timeStr,
+                            status: 'Added',
+                            statusColor: const Color(0xFF16A34A),
+                            statusBg: const Color(0xFFDCFCE7),
+                          ),
+                          if (!isLast)
+                            const Divider(height: 1, indent: 70, endIndent: 20),
+                        ],
+                      );
+                    }).toList(),
                   ),
-                  const Divider(height: 1, indent: 70, endIndent: 20),
-                  _buildActivityRow(
-                    icon: CupertinoIcons.person_solid,
-                    iconBg: const Color(0xFFEFF6FF),
-                    iconColor: const Color(0xFF1D4ED8),
-                    title: 'New User Registered',
-                    subtitle: 'Rahul Sharma',
-                    location: 'Pune, Maharashtra',
-                    time: '15 min ago',
-                    status: 'Active',
-                    statusColor: const Color(0xFF2563EB),
-                    statusBg: const Color(0xFFDBEAFE),
-                  ),
-                  const Divider(height: 1, indent: 70, endIndent: 20),
-                  _buildActivityRow(
-                    icon: CupertinoIcons.doc_text,
-                    iconBg: const Color(0xFFFFF7ED),
-                    iconColor: const Color(0xFFC2410C),
-                    title: 'Tree Verification Pending',
-                    subtitle: '50 Trees • Eco Drive',
-                    location: 'Amravati, Maharashtra',
-                    time: '30 min ago',
-                    status: 'Pending',
-                    statusColor: const Color(0xFFD97706),
-                    statusBg: const Color(0xFFFEF3C7),
-                  ),
-                  const Divider(height: 1, indent: 70, endIndent: 20),
-                  _buildActivityRow(
-                    icon: CupertinoIcons.flag,
-                    iconBg: const Color(0xFFF0FDF4),
-                    iconColor: const Color(0xFF16A34A),
-                    title: 'Campaign Completed',
-                    subtitle: 'Save Nature Campaign',
-                    location: 'Aurangabad, Maharashtra',
-                    time: '1 hour ago',
-                    status: 'Completed',
-                    statusColor: const Color(0xFF16A34A),
-                    statusBg: const Color(0xFFDCFCE7),
-                  ),
-                ],
-              ),
+                );
+              },
             ),
           ),
 
@@ -405,15 +451,8 @@ class AdminStatsView extends StatelessWidget {
               color: const Color(0xFF4B5563),
             ),
           ),
-          const SizedBox(height: 8),
           Row(
             children: [
-              const Icon(
-                CupertinoIcons.arrow_up,
-                color: Color(0xFF16A34A),
-                size: 10,
-              ),
-              const SizedBox(width: 2),
               Text(
                 change,
                 style: GoogleFonts.inter(
@@ -424,7 +463,7 @@ class AdminStatsView extends StatelessWidget {
               ),
               const SizedBox(width: 4),
               Text(
-                'vs last month',
+                'database',
                 style: GoogleFonts.inter(
                   fontSize: 10,
                   color: const Color(0xFF9CA3AF),

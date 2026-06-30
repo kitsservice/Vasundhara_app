@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Certificate Demo</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@700&family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Montserrat:wght@300;400;600&display=swap" rel="stylesheet">
+    
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #333;
+            margin: 0;
+            font-family: 'Montserrat', sans-serif;
+        }
+
+        .certificate {
+            width: 1000px;
+            height: 700px;
+            background-color: #F9F6EE; /* Cream background */
+            padding: 30px;
+            box-sizing: border-box;
+            position: relative;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+
+        .outer-border {
+            width: 100%;
+            height: 100%;
+            border: 12px solid #1B4332; /* Dark green */
+            padding: 10px;
+            box-sizing: border-box;
+        }
+
+        .inner-border {
+            width: 100%;
+            height: 100%;
+            border: 2px solid #C5A059; /* Gold */
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 40px 60px;
+            text-align: center;
+        }
+
+        .header-logo {
+            color: #1B4332;
+            margin-bottom: 5px;
+        }
+        
+        .header-logo svg {
+            width: 50px;
+            height: 50px;
+            fill: #1B4332;
+        }
+
+        .header-title {
+            font-family: 'Playfair Display', serif;
+            font-weight: 700;
+            font-size: 32px;
+            color: #1B4332;
+            letter-spacing: 4px;
+            margin: 10px 0 0 0;
+        }
+
+        .header-subtitle {
+            font-size: 12px;
+            color: #1B4332;
+            letter-spacing: 5px;
+            margin: 5px 0 15px 0;
+        }
+
+        .motto {
+            font-size: 9px;
+            color: #C5A059;
+            letter-spacing: 2px;
+            margin-bottom: 40px;
+        }
+
+        .main-title {
+            font-family: 'Playfair Display', serif;
+            font-weight: 700;
+            font-size: 36px;
+            color: #1B4332;
+            letter-spacing: 2px;
+            margin-bottom: 40px;
+        }
+
+        .presented-to {
+            font-size: 11px;
+            color: #333;
+            letter-spacing: 2px;
+            margin-bottom: 15px;
+        }
+
+        .name {
+            font-family: 'Dancing Script', cursive;
+            font-size: 80px;
+            color: #C5A059;
+            margin: 0;
+            line-height: 1;
+            padding: 0 40px;
+            border-bottom: 2px solid #C5A059;
+            display: inline-block;
+        }
+
+        .description {
+            margin-top: 30px;
+            font-family: 'Playfair Display', serif;
+            font-size: 16px;
+            color: #333;
+            line-height: 1.6;
+            max-width: 700px;
+        }
+
+        .tree-count {
+            font-family: 'Playfair Display', serif;
+            font-weight: 700;
+            font-size: 20px;
+            color: #1B4332;
+            margin: 15px 0;
+        }
+
+        .footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            width: 100%;
+            margin-top: auto;
+            padding: 0 20px;
+        }
+
+        .signature-block {
+            text-align: center;
+            width: 200px;
+        }
+
+        .signature-line {
+            width: 100%;
+            height: 1px;
+            background-color: #333;
+            margin-bottom: 5px;
+        }
+
+        .signature-text {
+            font-family: 'Playfair Display', serif;
+            font-size: 16px;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .signature-label {
+            font-size: 10px;
+            color: #666;
+            letter-spacing: 2px;
+        }
+
+        .seal {
+            width: 120px;
+            height: 120px;
+            background: radial-gradient(circle, #D4AF37 0%, #AA7C11 100%);
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+            border: 2px dashed #FFF;
+            outline: 4px solid #D4AF37;
+            position: relative;
+        }
+        
+        .seal-text {
+            color: white;
+            font-size: 14px;
+            font-weight: bold;
+            text-align: center;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+            letter-spacing: 1px;
+        }
+
+        .leaves-left, .leaves-right {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 150px;
+            opacity: 0.15;
+            pointer-events: none;
+        }
+
+        .leaves-left {
+            left: 20px;
+        }
+
+        .leaves-right {
+            right: 20px;
+            transform: translateY(-50%) scaleX(-1);
+        }
+    </style>
+</head>
+<body>
+
+    <div class="certificate">
+        <!-- SVG Leaves background placeholder (abstract shapes) -->
+        <svg class="leaves-left" viewBox="0 0 100 300" preserveAspectRatio="none">
+            <path d="M50,0 C80,50 90,100 50,150 C10,200 20,250 50,300 C70,250 80,200 50,150 C30,100 20,50 50,0" fill="#1B4332"/>
+            <path d="M30,50 C60,100 70,150 30,200 C0,150 10,100 30,50" fill="#2D6A4F"/>
+        </svg>
+        <svg class="leaves-right" viewBox="0 0 100 300" preserveAspectRatio="none">
+            <path d="M50,0 C80,50 90,100 50,150 C10,200 20,250 50,300 C70,250 80,200 50,150 C30,100 20,50 50,0" fill="#1B4332"/>
+            <path d="M30,50 C60,100 70,150 30,200 C0,150 10,100 30,50" fill="#2D6A4F"/>
+        </svg>
+
+        <div class="outer-border">
+            <div class="inner-border">
+                
+                <div class="header-logo">
+                    <!-- Simple Tree SVG -->
+                    <svg viewBox="0 0 24 24">
+                        <path d="M12,2 C7,2 4,7 4,12 C4,16 6,19 9,21 L9,22 C9,22.55 9.45,23 10,23 L14,23 C14.55,23 15,22.55 15,22 L15,21 C18,19 20,16 20,12 C20,7 17,2 12,2 Z M12,21 L12,18 C12,17.45 11.55,17 11,17 C10.45,17 10,17.45 10,18 L10,21 C7.5,19.5 5.5,16.5 5.5,12 C5.5,7.5 8,4 12,4 C16,4 18.5,7.5 18.5,12 C18.5,16.5 16.5,19.5 14,21 L14,18 C14,16.34 12.66,15 11,15 C10.45,15 10,15.45 10,16 C10,16.55 10.45,17 11,17 C11.55,17 12,17.45 12,18 L12,21 C12,21 12,21 12,21 Z" />
+                        <path d="M12 6c-2.76 0-5 2.24-5 5s2.24 5 5 5 5-2.24 5-5-2.24-5-5-5zm0 8c-1.65 0-3-1.35-3-3s1.35-3 3-3 3 1.35 3 3-1.35 3-3 3z"/>
+                    </svg>
+                </div>
+                <h1 class="header-title">VASUNDHARA</h1>
+                <div class="header-subtitle">— TREE PLANTATION —</div>
+                <div class="motto">PLANT TODAY • NURTURE TOMORROW • PRESERVE FOREVER</div>
+
+                <div class="main-title">GUARDIAN OF THE EARTH AWARD</div>
+
+                <div class="presented-to">PRESENTED WITH OUR DEEPEST GRATITUDE TO</div>
+                
+                <h2 class="name">Sarthak Kumarrao Joshi</h2>
+
+                <div class="description">
+                    for your extraordinary devotion to Mother Earth.<br>
+                    By selflessly planting and nurturing<br>
+                    <div class="tree-count">1 TREE,</div>
+                    you have breathed new life into our planet and gifted future generations a greener, healthier world.<br>
+                    Your actions today will flourish into the forests of tomorrow.<br>
+                    <br>
+                    <strong>We are immensely proud to recognize you as a true Champion of Nature.</strong>
+                </div>
+
+                <div class="footer">
+                    <div class="signature-block">
+                        <div class="signature-text">27 June 2026</div>
+                        <div class="signature-line"></div>
+                        <div class="signature-label">DATE AWARDED</div>
+                    </div>
+
+                    <div class="seal">
+                        <div class="seal-text">VERIFIED<br>100%<br>GREEN</div>
+                    </div>
+
+                    <div class="signature-block">
+                        <div class="signature-text" style="font-family: 'Dancing Script', cursive; font-size: 28px; font-weight: normal; color: #1B4332;">Vasundhara Team</div>
+                        <div class="signature-line"></div>
+                        <div class="signature-label">OFFICIAL SIGNATURE</div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+</body>
+</html>

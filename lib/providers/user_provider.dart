@@ -4,20 +4,24 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'dart:async';
 
 class PlantedTree {
+  final String? id;
   final String speciesName;
   final DateTime datePlanted;
   final String location;
   final int quantity;
   final String? imageUrl;
+  final String? growthImageUrl;
   final double? latitude;
   final double? longitude;
 
   PlantedTree({
+    this.id,
     required this.speciesName,
     required this.datePlanted,
     required this.location,
     required this.quantity,
     this.imageUrl,
+    this.growthImageUrl,
     this.latitude,
     this.longitude,
   });
@@ -29,18 +33,21 @@ class PlantedTree {
       'location': location,
       'quantity': quantity,
       'imageUrl': imageUrl,
+      'growthImageUrl': growthImageUrl,
       'latitude': latitude,
       'longitude': longitude,
     };
   }
 
-  factory PlantedTree.fromMap(Map<String, dynamic> map) {
+  factory PlantedTree.fromMap(Map<String, dynamic> map, {String? id}) {
     return PlantedTree(
+      id: id,
       speciesName: map['speciesName'] ?? '',
       datePlanted: (map['datePlanted'] as Timestamp).toDate(),
       location: map['location'] ?? '',
       quantity: map['quantity']?.toInt() ?? 0,
       imageUrl: map['imageUrl'],
+      growthImageUrl: map['growthImageUrl'],
       latitude: map['latitude']?.toDouble(),
       longitude: map['longitude']?.toDouble(),
     );
@@ -61,6 +68,9 @@ class UserProvider extends ChangeNotifier {
   int get unreadNotificationsCount =>
       _notifications.where((n) => !(n['isRead'] ?? false)).length;
 
+  final List<String> _unlockedBadges = [];
+  List<String> get unlockedBadges => _unlockedBadges;
+
   List<PlantedTree> get plantedTrees => _plantedTrees;
 
   int get totalTreesPlanted =>
@@ -75,7 +85,7 @@ class UserProvider extends ChangeNotifier {
       (snapshot) {
         _plantedTrees.clear();
         for (var doc in snapshot.docs) {
-          _plantedTrees.add(PlantedTree.fromMap(doc.data()));
+          _plantedTrees.add(PlantedTree.fromMap(doc.data(), id: doc.id));
         }
         notifyListeners();
       },
@@ -122,18 +132,48 @@ class UserProvider extends ChangeNotifier {
     final user = _auth.currentUser;
     if (user == null) return;
     try {
-      final snapshot = await _firestore
+      final personalFuture = _firestore
           .collection('users')
           .doc(user.uid)
           .collection('notifications')
           .orderBy('createdAt', descending: true)
           .get();
 
-      _notifications = snapshot.docs.map((doc) {
+      final globalFuture = _firestore
+          .collection('announcements')
+          .orderBy('createdAt', descending: true)
+          .get();
+
+      final results = await Future.wait([personalFuture, globalFuture]);
+      final personalSnapshot = results[0];
+      final globalSnapshot = results[1];
+
+      final allNotifs = <Map<String, dynamic>>[];
+
+      for (var doc in personalSnapshot.docs) {
         final data = doc.data();
         data['id'] = doc.id;
-        return data;
-      }).toList();
+        allNotifs.add(data);
+      }
+
+      for (var doc in globalSnapshot.docs) {
+        final data = doc.data();
+        data['id'] = doc.id;
+        // Global announcements are unread by default, maybe handled differently in UI
+        allNotifs.add(data);
+      }
+
+      // Sort combined list by createdAt descending
+      allNotifs.sort((a, b) {
+        final aTime = a['createdAt'] as Timestamp?;
+        final bTime = b['createdAt'] as Timestamp?;
+        if (aTime == null && bTime == null) return 0;
+        if (aTime == null) return 1;
+        if (bTime == null) return -1;
+        return bTime.compareTo(aTime);
+      });
+
+      _notifications = allNotifs;
       notifyListeners();
     } catch (e) {
       debugPrint('Error fetching notifications: $e');
@@ -241,6 +281,68 @@ class UserProvider extends ChangeNotifier {
       notifyListeners();
     } catch (e) {
       debugPrint('Error planting tree: $e');
+    }
+  }
+
+  Future<void> uploadGrowthPhoto(String treeId, String growthImageUrl) async {
+    final user = _auth.currentUser;
+    if (user == null) return;
+    try {
+      // Update the user's specific tree document
+      await _firestore
+          .collection('users')
+          .doc(user.uid)
+          .collection('trees')
+          .doc(treeId)
+          .update({'growthImageUrl': growthImageUrl});
+
+      // Update the global planted_trees document
+      await _firestore
+          .collection('planted_trees')
+          .doc(treeId)
+          .update({'growthImageUrl': growthImageUrl});
+
+      // Find it in the local list and update
+      final index = _plantedTrees.indexWhere((tree) => tree.id == treeId);
+      if (index != -1) {
+        final oldTree = _plantedTrees[index];
+        _plantedTrees[index] = PlantedTree(
+          id: oldTree.id,
+          speciesName: oldTree.speciesName,
+          datePlanted: oldTree.datePlanted,
+          location: oldTree.location,
+          quantity: oldTree.quantity,
+          imageUrl: oldTree.imageUrl,
+          growthImageUrl: growthImageUrl, // the new URL
+          latitude: oldTree.latitude,
+          longitude: oldTree.longitude,
+        );
+        notifyListeners();
+      }
+    } catch (e) {
+      debugPrint('Error uploading growth photo: $e');
+    }
+  }
+
+  Future<void> unlockBadge(String badgeId) async {
+    final user = _auth.currentUser;
+    if (user == null) return;
+
+    if (!_unlockedBadges.contains(badgeId)) {
+      _unlockedBadges.add(badgeId);
+      notifyListeners();
+
+      // In a real app, save to Firestore:
+      try {
+        await _firestore.collection('users').doc(user.uid).set(
+          {
+            'unlockedBadges': FieldValue.arrayUnion([badgeId]),
+          },
+          SetOptions(merge: true),
+        );
+      } catch (e) {
+        debugPrint('Error unlocking badge: $e');
+      }
     }
   }
 }
