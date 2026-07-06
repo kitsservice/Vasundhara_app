@@ -1,4 +1,5 @@
 import 'dart:convert';
+import '../../core/constants/api_keys.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter_map/flutter_map.dart';
@@ -21,7 +22,6 @@ class LocationPickerScreen extends StatefulWidget {
 
 class _LocationPickerScreenState extends State<LocationPickerScreen> {
   final MapController _mapController = MapController();
-  late LatLng _centerPosition;
   bool _isLoadingAddress = false;
   bool _isSearching = false;
 
@@ -62,7 +62,6 @@ class _LocationPickerScreenState extends State<LocationPickerScreen> {
   @override
   void initState() {
     super.initState();
-    _centerPosition = widget.initialLocation ?? const LatLng(18.5204, 73.8567);
     if (widget.initialLocation == null) {
       _locateUser();
     }
@@ -101,18 +100,16 @@ class _LocationPickerScreenState extends State<LocationPickerScreen> {
 
     final position = await Geolocator.getCurrentPosition();
     if (mounted) {
-      setState(() {
-        _centerPosition = LatLng(position.latitude, position.longitude);
-      });
-      _mapController.move(_centerPosition, 16.0);
+      _mapController.move(LatLng(position.latitude, position.longitude), 16.0);
     }
   }
 
   Future<void> _confirmLocation() async {
     setState(() => _isLoadingAddress = true);
     try {
-      final lat = _centerPosition.latitude;
-      final lon = _centerPosition.longitude;
+      final center = _mapController.camera.center;
+      final lat = center.latitude;
+      final lon = center.longitude;
 
       final response = await http.get(
         Uri.parse(
@@ -141,11 +138,12 @@ class _LocationPickerScreenState extends State<LocationPickerScreen> {
       debugPrint('Reverse geocode error: $e');
       if (mounted) {
         // Fallback if API fails
+        final center = _mapController.camera.center;
         Navigator.pop(context, {
           'address':
-              'Location (${_centerPosition.latitude.toStringAsFixed(4)}, ${_centerPosition.longitude.toStringAsFixed(4)})',
-          'lat': _centerPosition.latitude,
-          'lon': _centerPosition.longitude,
+              'Location (${center.latitude.toStringAsFixed(4)}, ${center.longitude.toStringAsFixed(4)})',
+          'lat': center.latitude,
+          'lon': center.longitude,
         });
       }
     } finally {
@@ -174,20 +172,14 @@ class _LocationPickerScreenState extends State<LocationPickerScreen> {
           FlutterMap(
             mapController: _mapController,
             options: MapOptions(
-              initialCenter: _centerPosition,
+              initialCenter:
+                  widget.initialLocation ?? const LatLng(18.5204, 73.8567),
               initialZoom: 15.0,
-              onPositionChanged: (MapCamera position, bool hasGesture) {
-                if (hasGesture) {
-                  setState(() {
-                    _centerPosition = position.center;
-                  });
-                }
-              },
             ),
             children: [
               TileLayer(
                 urlTemplate:
-                    'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png',
+                    'https://api.olamaps.io/tiles/vector/v1/styles/default-light-standard/xyz/{z}/{x}/{y}.png?api_key=${ApiKeys.olaMapsApiKey}',
                 userAgentPackageName: 'com.vasundhara.treeapp',
               ),
             ],
@@ -221,9 +213,6 @@ class _LocationPickerScreenState extends State<LocationPickerScreen> {
                   final lat = double.parse(selection['lat'].toString());
                   final lon = double.parse(selection['lon'].toString());
                   final newPosition = LatLng(lat, lon);
-                  setState(() {
-                    _centerPosition = newPosition;
-                  });
                   _mapController.move(newPosition, 15.0);
                   FocusScope.of(context).unfocus();
                 },

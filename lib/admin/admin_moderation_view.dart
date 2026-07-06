@@ -3,6 +3,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import '../theme/app_colors.dart';
 
 class AdminModerationView extends StatefulWidget {
@@ -309,11 +310,10 @@ class _ModerationCard extends StatelessWidget {
                   width: double.infinity,
                   color: Colors.grey.shade900,
                   child: imageUrl.isNotEmpty
-                      ? Image.network(
-                          imageUrl,
+                      ? CachedNetworkImage(
+                          imageUrl: imageUrl,
                           fit: BoxFit.cover,
-                          errorBuilder: (context, error, stackTrace) =>
-                              const Icon(
+                          errorWidget: (context, url, error) => const Icon(
                             CupertinoIcons.tree,
                             size: 80,
                             color: Colors.white24,

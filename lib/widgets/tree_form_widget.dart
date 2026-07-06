@@ -10,7 +10,7 @@ import '../theme/app_colors.dart';
 import '../providers/user_provider.dart';
 import '../services/cloudinary_service.dart';
 import 'package:google_fonts/google_fonts.dart';
-import '../screens/map/location_picker_screen.dart';
+import '../services/ola_maps_service.dart';
 import 'package:lottie/lottie.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
@@ -27,7 +27,6 @@ class TreeFormWidget extends StatefulWidget {
 
 class _TreeFormWidgetState extends State<TreeFormWidget>
     with WidgetsBindingObserver {
-  bool get isMarathi => context.watch<SettingsProvider>().isMarathi;
   int _quantity = 1;
   DateTime _selectedDate = DateTime.now();
   final TextEditingController _treeNameController = TextEditingController();
@@ -242,6 +241,7 @@ class _TreeFormWidgetState extends State<TreeFormWidget>
   }
 
   Future<void> _submitForm() async {
+    final isMarathi = context.read<SettingsProvider>().isMarathi;
     if (_treeNameController.text.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -314,7 +314,7 @@ class _TreeFormWidgetState extends State<TreeFormWidget>
 
     if (!mounted) return;
 
-    await Provider.of<UserProvider>(context, listen: false).plantTree(
+    await context.read<UserProvider>().plantTree(
       PlantedTree(
         speciesName: _treeNameController.text.trim(),
         datePlanted: _selectedDate,
@@ -385,6 +385,7 @@ class _TreeFormWidgetState extends State<TreeFormWidget>
 
   @override
   Widget build(BuildContext context) {
+    final isMarathi = context.watch<SettingsProvider>().isMarathi;
     return SingleChildScrollView(
       padding: const EdgeInsets.all(20.0),
       child: Container(
@@ -587,18 +588,23 @@ class _TreeFormWidgetState extends State<TreeFormWidget>
           controller: _locationController,
           readOnly: true,
           onTap: () async {
-            final result = await Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => const LocationPickerScreen(),
-              ),
-            );
-            if (result != null && result is Map<String, dynamic>) {
-              setState(() {
-                _locationController.text = result['address'] as String;
-                _pickedLat = result['lat'] as double;
-                _pickedLon = result['lon'] as double;
-              });
+            try {
+              // Ask for permission and get current location natively
+              final position = await Geolocator.getCurrentPosition();
+              final String? address = await OlaMapsService.reverseGeocode(
+                position.latitude,
+                position.longitude,
+              );
+
+              if (address != null) {
+                setState(() {
+                  _locationController.text = address;
+                  _pickedLat = position.latitude;
+                  _pickedLon = position.longitude;
+                });
+              }
+            } catch (e) {
+              debugPrint('Error fetching location: $e');
             }
           },
           style: GoogleFonts.inter(fontSize: 15, color: AppColors.textPrimary),

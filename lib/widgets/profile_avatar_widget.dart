@@ -25,16 +25,22 @@ class _ProfileAvatarWidgetState extends State<ProfileAvatarWidget> {
     if (image != null) {
       setState(() => _isUploading = true);
 
-      final String? url = await CloudinaryService.uploadImage(File(image.path));
-
-      if (url != null) {
-        await FirebaseAuth.instance.currentUser?.updatePhotoURL(url);
-        // Force a rebuild of the auth state or just this widget
-        setState(() {});
-      } else {
+      try {
+        final String? url = await CloudinaryService.uploadImage(File(image.path));
+        
+        if (url != null) {
+          await FirebaseAuth.instance.currentUser?.updatePhotoURL(url);
+          await FirebaseAuth.instance.currentUser?.reload();
+          // Force a rebuild of the auth state or just this widget
+          setState(() {});
+        }
+      } catch (e) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Failed to upload image.')),
+            SnackBar(
+              content: Text('Setup required: $e'),
+              duration: const Duration(seconds: 4),
+            ),
           );
         }
       }
@@ -50,6 +56,7 @@ class _ProfileAvatarWidgetState extends State<ProfileAvatarWidget> {
     final photoURL = FirebaseAuth.instance.currentUser?.photoURL;
 
     return GestureDetector(
+      behavior: HitTestBehavior.opaque,
       onTap: _isUploading ? null : _pickAndUploadImage,
       child: Stack(
         alignment: Alignment.center,

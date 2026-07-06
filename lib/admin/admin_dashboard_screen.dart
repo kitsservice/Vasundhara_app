@@ -74,7 +74,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                   if (snapshot.connectionState == ConnectionState.waiting) {
                     return const Center(
                       child: CircularProgressIndicator(
-                        color: Color(0xFF1B8A44),
+                        color: AppColors.primary,
                       ),
                     );
                   }
@@ -115,13 +115,12 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                           Container(
                             padding: const EdgeInsets.all(10),
                             decoration: BoxDecoration(
-                              color: const Color(0xFF1B8A44)
-                                  .withValues(alpha: 0.1),
+                              color: AppColors.primary.withValues(alpha: 0.1),
                               shape: BoxShape.circle,
                             ),
                             child: const Icon(
                               CupertinoIcons.tree,
-                              color: Color(0xFF1B8A44),
+                              color: AppColors.primary,
                               size: 20,
                             ),
                           ),
@@ -150,7 +149,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                                         text: '$quantity $type',
                                         style: const TextStyle(
                                           fontWeight: FontWeight.bold,
-                                          color: Color(0xFF1B8A44),
+                                          color: AppColors.primary,
                                         ),
                                       ),
                                       const TextSpan(text: '!'),
@@ -185,13 +184,13 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       key: _scaffoldKey,
-      backgroundColor: const Color(0xFFF8F9FA),
+      backgroundColor: AppColors.background,
       drawer: _buildAdminDrawer(context),
       body: Stack(
         children: [
           // The background of the body should be slightly grey
           Positioned.fill(
-            child: Container(color: const Color(0xFFF8F9FA)),
+            child: Container(color: AppColors.background),
           ),
 
           // Curved Green Header
@@ -203,7 +202,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
               height: 260, // Total height to allow overlap
               decoration: const BoxDecoration(
                 gradient: LinearGradient(
-                  colors: [Color(0xFF0F7A3E), Color(0xFF165A31)],
+                  colors: [AppColors.primary, AppColors.secondary],
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
                 ),
@@ -326,7 +325,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
             builder: (context) => const AdminNurseryRegistrationSheet(),
           );
         },
-        backgroundColor: const Color(0xFF1B8A44),
+        backgroundColor: AppColors.primary,
         shape: const CircleBorder(),
         child: const Icon(Icons.add, color: Colors.white, size: 32),
       ),
@@ -375,7 +374,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
 
   Widget _buildNavItem(IconData icon, String label, int index) {
     final isSelected = _currentIndex == index;
-    final color = isSelected ? const Color(0xFF1B8A44) : Colors.grey.shade500;
+    final color = isSelected ? AppColors.primary : Colors.grey.shade500;
 
     return GestureDetector(
       onTap: () {
@@ -416,7 +415,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                 const EdgeInsets.only(top: 60, bottom: 20, left: 20, right: 20),
             decoration: const BoxDecoration(
               gradient: LinearGradient(
-                colors: [Color(0xFF0F7A3E), Color(0xFF165A31)],
+                colors: [AppColors.primary, AppColors.secondary],
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
               ),
@@ -429,7 +428,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                   backgroundColor: Colors.white,
                   child: Icon(
                     CupertinoIcons.tree,
-                    color: Color(0xFF165A31),
+                    color: AppColors.secondary,
                     size: 32,
                   ),
                 ),
@@ -517,7 +516,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
             ),
             onTap: () {
               Navigator.pop(context); // close drawer
-              Provider.of<AuthProvider>(context, listen: false).signOut();
+              context.read<AuthProvider>().signOut();
             },
           ),
           const SizedBox(height: 20),

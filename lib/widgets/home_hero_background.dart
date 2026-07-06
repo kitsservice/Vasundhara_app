@@ -16,7 +16,7 @@ class HomeHeroBackground extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isMarathi = context.watch<SettingsProvider>().isMarathi;
-    final userProvider = Provider.of<UserProvider>(context);
+    final userProvider = context.watch<UserProvider>();
 
     return SliverToBoxAdapter(
       child: Stack(

@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter/material.dart';
 import '../../providers/settings_provider.dart';
 import 'package:flutter/cupertino.dart';
@@ -12,8 +13,10 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:geolocator/geolocator.dart';
 import '../../theme/app_colors.dart';
-import '../../providers/user_provider.dart';
-
+import '../../services/firestore_marker_service.dart';
+import '../../models/tree_marker_model.dart';
+import '../../models/nursery_marker_model.dart';
+import '../../core/constants/api_keys.dart';
 class MapScreen extends StatefulWidget {
   const MapScreen({super.key});
 
@@ -28,23 +31,30 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
   bool _isSearching = false;
   bool _showNurseries = true;
 
-  // Mock Nurseries Data
-  final List<Map<String, dynamic>> _nurseries = [
-    {
-      'name': 'Green Leaf Nursery',
-      'lat': 18.5154,
-      'lon': 73.8617,
-      'description': 'Wide variety of indoor and outdoor plants.',
-      'phone': '+91 9876543210',
-    },
-    {
-      'name': 'Pune Plant Center',
-      'lat': 18.5294,
-      'lon': 73.8467,
-      'description': 'Specialists in fruit trees and local saplings.',
-      'phone': '+91 8765432109',
-    },
-  ];
+  final FirestoreMarkerService _firestoreService = FirestoreMarkerService();
+  List<TreeMarkerModel> _trees = [];
+  List<NurseryMarkerModel> _nurseries = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchData();
+  }
+
+  Future<void> _fetchData() async {
+    try {
+      final trees = await _firestoreService.getPlantedTrees();
+      final nurseries = await _firestoreService.getNurseries();
+      if (mounted) {
+        setState(() {
+          _trees = trees;
+          _nurseries = nurseries;
+        });
+      }
+    } catch (e) {
+      debugPrint('Error fetching map data: $e');
+    }
+  }
 
   void _animatedMapMove(LatLng destLocation, double destZoom) {
     final latTween = Tween<double>(
@@ -213,7 +223,7 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
     }
   }
 
-  void _showNurseryDetails(Map<String, dynamic> nursery) {
+  void _showNurseryDetails(NurseryMarkerModel nursery) {
     showModalBottomSheet(
       context: context,
       shape: const RoundedRectangleBorder(
@@ -227,7 +237,7 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                nursery['name'] as String,
+                nursery.nurseryName,
                 style: const TextStyle(
                   fontSize: 22,
                   fontWeight: FontWeight.bold,
@@ -236,7 +246,7 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
               ),
               const SizedBox(height: 8),
               Text(
-                nursery['description'] as String,
+                nursery.address,
                 style: const TextStyle(
                   fontSize: 16,
                   color: AppColors.textSecondary,
@@ -248,7 +258,7 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
                   const Icon(Icons.phone, color: AppColors.primary, size: 20),
                   const SizedBox(width: 8),
                   Text(
-                    nursery['phone'] as String,
+                    nursery.phone,
                     style: const TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w600,
@@ -263,8 +273,8 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
                   onPressed: () {
                     Navigator.pop(context);
                     _openMapsForDirections(
-                      nursery['lat'] as double,
-                      nursery['lon'] as double,
+                      nursery.latitude,
+                      nursery.longitude,
                     );
                   },
                   icon: const Icon(Icons.directions, color: Colors.white),
@@ -292,13 +302,13 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
     );
   }
 
-  void _showTreeDetails(PlantedTree tree) {
+  void _showTreeDetails(TreeMarkerModel tree) {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title: Text(
-          tree.speciesName,
+          tree.treeName,
           style: const TextStyle(fontWeight: FontWeight.bold),
         ),
         content: Column(
@@ -306,13 +316,13 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text('Location: ${tree.location}'),
-            Text('Quantity: ${tree.quantity}'),
+            Text('Planted by: ${tree.plantedBy} on ${tree.plantedDate}'),
             const SizedBox(height: 16),
-            if (tree.imageUrl != null)
+            if (tree.imageUrl.isNotEmpty)
               ClipRRect(
                 borderRadius: BorderRadius.circular(12),
                 child: CachedNetworkImage(
-                  imageUrl: tree.imageUrl!,
+                  imageUrl: tree.imageUrl,
                   height: 200,
                   width: double.infinity,
                   fit: BoxFit.cover,
@@ -350,7 +360,7 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
   Widget build(BuildContext context) {
     final List<Marker> nurseryMarkers = _nurseries.map((n) {
       return Marker(
-        point: LatLng(n['lat'] as double, n['lon'] as double),
+        point: LatLng(n.latitude, n.longitude),
         width: 45,
         height: 45,
         child: GestureDetector(
@@ -421,7 +431,7 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
       children: [
         TileLayer(
           urlTemplate:
-              'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png',
+              'https://api.olamaps.io/tiles/vector/v1/styles/default-light-standard/xyz/{z}/{x}/{y}.png?api_key=${ApiKeys.olaMapsApiKey}',
           userAgentPackageName: 'com.vasundhara.treeapp',
         ),
         if (_showNurseries)
@@ -429,70 +439,61 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
             markers: nurseryMarkers,
           )
         else
-          Consumer<UserProvider>(
-            builder: (context, userProvider, child) {
-              final List<Marker> treeMarkers = userProvider.plantedTrees
-                  .where((t) => t.latitude != null && t.longitude != null)
-                  .map(
-                    (tree) => Marker(
-                      point: LatLng(tree.latitude!, tree.longitude!),
-                      width: 50,
-                      height: 50,
-                      child: GestureDetector(
-                        onTap: () => _showTreeDetails(tree),
-                        child: Container(
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            shape: BoxShape.circle,
-                            boxShadow: [
-                              BoxShadow(
-                                color: AppColors.primary.withValues(alpha: 0.5),
-                                blurRadius: 10,
-                                spreadRadius: 2,
-                              ),
-                            ],
+          MarkerClusterLayerWidget(
+            options: MarkerClusterLayerOptions(
+              maxClusterRadius: 45,
+              size: const Size(40, 40),
+              alignment: Alignment.center,
+              padding: const EdgeInsets.all(50),
+              maxZoom: 15,
+              markers: _trees.map(
+                (tree) => Marker(
+                  point: LatLng(tree.latitude, tree.longitude),
+                  width: 50,
+                  height: 50,
+                  child: GestureDetector(
+                    onTap: () => _showTreeDetails(tree),
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        shape: BoxShape.circle,
+                        boxShadow: [
+                          BoxShadow(
+                            color: AppColors.primary.withValues(alpha: 0.5),
+                            blurRadius: 10,
+                            spreadRadius: 2,
                           ),
-                          child: const Center(
-                            child: Icon(
-                              CupertinoIcons.leaf_arrow_circlepath,
-                              color: AppColors.primary,
-                              size: 28,
-                            ),
-                          ),
+                        ],
+                      ),
+                      child: const Center(
+                        child: Icon(
+                          CupertinoIcons.leaf_arrow_circlepath,
+                          color: AppColors.primary,
+                          size: 28,
                         ),
                       ),
                     ),
-                  )
-                  .toList();
-
-              return MarkerClusterLayerWidget(
-                options: MarkerClusterLayerOptions(
-                  maxClusterRadius: 45,
-                  size: const Size(40, 40),
-                  alignment: Alignment.center,
-                  padding: const EdgeInsets.all(50),
-                  maxZoom: 15,
-                  markers: treeMarkers,
-                  builder: (context, markers) {
-                    return Container(
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(20),
-                        color: AppColors.primary,
-                      ),
-                      child: Center(
-                        child: Text(
-                          markers.length.toString(),
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
-                    );
-                  },
+                  ),
                 ),
-              );
-            },
+              ).toList(),
+              builder: (context, markers) {
+                return Container(
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(20),
+                    color: AppColors.primary,
+                  ),
+                  child: Center(
+                    child: Text(
+                      markers.length.toString(),
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                );
+              },
+            ),
           ),
       ],
     );

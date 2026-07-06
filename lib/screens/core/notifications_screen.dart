@@ -48,6 +48,52 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
             fontWeight: FontWeight.bold,
           ),
         ),
+        actions: [
+          if (notifications.isNotEmpty)
+            IconButton(
+              icon: const Icon(CupertinoIcons.trash, color: Colors.redAccent),
+              onPressed: () {
+                showDialog(
+                  context: context,
+                  builder: (context) => AlertDialog(
+                    title: Text(
+                      isMarathi
+                          ? 'सर्व अधिसूचना साफ करा'
+                          : 'Clear All Notifications',
+                      style: GoogleFonts.outfit(fontWeight: FontWeight.bold),
+                    ),
+                    content: Text(
+                      isMarathi
+                          ? 'तुम्हाला नक्की सर्व अधिसूचना साफ करायच्या आहेत का?'
+                          : 'Are you sure you want to clear all notifications?',
+                    ),
+                    actions: [
+                      TextButton(
+                        onPressed: () => Navigator.pop(context),
+                        child: Text(
+                          isMarathi ? 'रद्द करा' : 'Cancel',
+                          style: const TextStyle(color: Colors.grey),
+                        ),
+                      ),
+                      ElevatedButton(
+                        onPressed: () {
+                          context.read<UserProvider>().clearAllNotifications();
+                          Navigator.pop(context);
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.redAccent,
+                        ),
+                        child: Text(
+                          isMarathi ? 'साफ करा' : 'Clear',
+                          style: const TextStyle(color: Colors.white),
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              },
+            ),
+        ],
       ),
       body: notifications.isEmpty
           ? Center(

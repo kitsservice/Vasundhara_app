@@ -91,7 +91,7 @@ class ProfileScreen extends StatelessWidget {
               title: 'Logout',
               isDestructive: true,
               onTap: () {
-                Provider.of<AuthProvider>(context, listen: false).signOut();
+                context.read<AuthProvider>().signOut();
               },
             ),
           ],

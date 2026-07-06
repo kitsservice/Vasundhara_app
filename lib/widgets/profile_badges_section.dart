@@ -10,11 +10,10 @@ class ProfileBadgesSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // In a stateless widget, it is generally better to use context.watch or Consumer
-    final userProvider = context.watch<UserProvider>();
     final isMarathi = context.watch<SettingsProvider>().isMarathi;
-    final hasPhilanthropist =
-        userProvider.unlockedBadges.contains('green_philanthropist');
+    final hasPhilanthropist = context.select<UserProvider, bool>(
+      (provider) => provider.unlockedBadges.contains('green_philanthropist'),
+    );
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -53,11 +52,11 @@ class ProfileBadgesSection extends StatelessWidget {
                     colors: hasPhilanthropist
                         ? [
                             const Color(0xFFFFD700),
-                            const Color(0xFFF57F17)
+                            const Color(0xFFF57F17),
                           ] // Shiny Gold
                         : [
                             Colors.grey.shade300,
-                            Colors.grey.shade400
+                            Colors.grey.shade400,
                           ], // Locked Grey
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,

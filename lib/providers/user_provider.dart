@@ -59,6 +59,17 @@ class UserProvider extends ChangeNotifier {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final FirebaseAuth _auth = FirebaseAuth.instance;
   StreamSubscription<QuerySnapshot>? _subscription;
+  bool _isListening = false;
+
+  UserProvider() {
+    _auth.authStateChanges().listen((user) {
+      if (user == null) {
+        clearData();
+      } else {
+        fetchPlantedTrees();
+      }
+    });
+  }
 
   List<Map<String, dynamic>> _leaderboard = [];
   List<Map<String, dynamic>> get leaderboard => _leaderboard;
@@ -80,29 +91,50 @@ class UserProvider extends ChangeNotifier {
   int get totalLocations => _plantedTrees.map((e) => e.location).toSet().length;
 
   void listenToPlantedTrees() {
+    final user = _auth.currentUser;
+    if (user == null) return;
+
+    // Guard: only start one subscription
+    if (_isListening) return;
+    _isListening = true;
     _subscription?.cancel();
-    _subscription = _firestore.collection('planted_trees').snapshots().listen(
+    _subscription = _firestore
+        .collection('planted_trees')
+        .where('userId', isEqualTo: user.uid)
+        .snapshots()
+        .listen(
       (snapshot) {
         _plantedTrees.clear();
         for (var doc in snapshot.docs) {
           _plantedTrees.add(PlantedTree.fromMap(doc.data(), id: doc.id));
         }
+        _plantedTrees.sort((a, b) => b.datePlanted.compareTo(a.datePlanted));
         notifyListeners();
       },
       onError: (e) {
+        _isListening = false;
         debugPrint('Error listening to trees: $e');
       },
     );
   }
 
   Future<void> fetchPlantedTrees() async {
-    // Keeping this for backwards compatibility if needed, but we should use the listener
     listenToPlantedTrees();
+  }
+
+  void clearData() {
+    _subscription?.cancel();
+    _isListening = false;
+    _plantedTrees.clear();
+    _notifications.clear();
+    _unlockedBadges.clear();
+    notifyListeners();
   }
 
   @override
   void dispose() {
     _subscription?.cancel();
+    _isListening = false;
     super.dispose();
   }
 
@@ -156,8 +188,20 @@ class UserProvider extends ChangeNotifier {
         allNotifs.add(data);
       }
 
+      final userDoc = await _firestore.collection('users').doc(user.uid).get();
+      final lastCleared =
+          userDoc.data()?['lastClearedAnnouncementsTime'] as Timestamp?;
+
       for (var doc in globalSnapshot.docs) {
         final data = doc.data();
+        final createdAt = data['createdAt'] as Timestamp?;
+
+        if (lastCleared != null && createdAt != null) {
+          if (createdAt.compareTo(lastCleared) <= 0) {
+            continue;
+          }
+        }
+
         data['id'] = doc.id;
         // Global announcements are unread by default, maybe handled differently in UI
         allNotifs.add(data);
@@ -198,6 +242,36 @@ class UserProvider extends ChangeNotifier {
       }
     } catch (e) {
       debugPrint('Error marking notification read: $e');
+    }
+  }
+
+  Future<void> clearAllNotifications() async {
+    final user = _auth.currentUser;
+    if (user == null) return;
+    try {
+      final personalDocs = await _firestore
+          .collection('users')
+          .doc(user.uid)
+          .collection('notifications')
+          .get();
+
+      final batch = _firestore.batch();
+      for (var doc in personalDocs.docs) {
+        batch.delete(doc.reference);
+      }
+      await batch.commit();
+
+      await _firestore.collection('users').doc(user.uid).set(
+        {
+          'lastClearedAnnouncementsTime': FieldValue.serverTimestamp(),
+        },
+        SetOptions(merge: true),
+      );
+
+      _notifications.clear();
+      notifyListeners();
+    } catch (e) {
+      debugPrint('Error clearing notifications: $e');
     }
   }
 

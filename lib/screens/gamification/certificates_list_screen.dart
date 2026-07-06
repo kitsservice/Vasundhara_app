@@ -12,8 +12,9 @@ class CertificatesListScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final userProvider = context.watch<UserProvider>();
-    final totalTrees = userProvider.totalTreesPlanted;
+    final totalTrees = context.select<UserProvider, int>(
+      (provider) => provider.totalTreesPlanted,
+    );
 
     // Calculate earned certificates based on 1, 10, 20, 30... scale
     final List<Map<String, dynamic>> certificates = [];

@@ -87,63 +87,7 @@ class ProfessionalDrawer extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 16),
-          Padding(
-            padding:
-                const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-            child: Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: const Color(0xFFF9FAFB),
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: const Color(0xFFE5E7EB)),
-              ),
-              child: Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: AppColors.primary.withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: const Icon(
-                      CupertinoIcons.globe,
-                      color: AppColors.primary,
-                    ),
-                  ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          isMarathi ? 'ॲपची भाषा' : 'App Language',
-                          style: const TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 15,
-                            color: AppColors.textPrimary,
-                          ),
-                        ),
-                        Text(
-                          isMarathi ? 'मराठी' : 'English',
-                          style: const TextStyle(
-                            color: AppColors.textSecondary,
-                            fontSize: 13,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  CupertinoSwitch(
-                    value: isMarathi,
-                    activeTrackColor: AppColors.primary,
-                    onChanged: (value) {
-                      context.read<SettingsProvider>().toggleLanguage();
-                    },
-                  ),
-                ],
-              ),
-            ),
-          ),
+
           const SizedBox(height: 8),
           ListTile(
             leading: const Icon(
@@ -178,7 +122,7 @@ class ProfessionalDrawer extends StatelessWidget {
             ),
             onTap: () {
               // Note: AuthWrapper will automatically redirect after this
-              Provider.of<AuthProvider>(context, listen: false).signOut();
+              context.read<AuthProvider>().signOut();
             },
           ),
           const SizedBox(height: 16),

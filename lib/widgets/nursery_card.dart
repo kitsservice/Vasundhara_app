@@ -6,19 +6,23 @@ class NurseryCard extends StatelessWidget {
   final Map<String, dynamic> nursery;
   final String distanceText;
   final bool isMarathi;
-  final VoidCallback onBuyPressed;
+  final VoidCallback onCardTap;
+  final VoidCallback onContactTap;
 
   const NurseryCard({
     super.key,
     required this.nursery,
     required this.distanceText,
     required this.isMarathi,
-    required this.onBuyPressed,
+    required this.onCardTap,
+    required this.onContactTap,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Container(
+    return GestureDetector(
+      onTap: onCardTap,
+      child: Container(
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
@@ -47,7 +51,8 @@ class NurseryCard extends StatelessWidget {
               ),
               child: Container(
                 decoration: BoxDecoration(
-                  borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+                  borderRadius:
+                      const BorderRadius.vertical(top: Radius.circular(16)),
                   gradient: LinearGradient(
                     colors: [
                       Colors.black.withValues(alpha: 0.6),
@@ -60,7 +65,8 @@ class NurseryCard extends StatelessWidget {
                 padding: const EdgeInsets.all(8),
                 alignment: Alignment.topRight,
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                   decoration: BoxDecoration(
                     color: Colors.white.withValues(alpha: 0.9),
                     borderRadius: BorderRadius.circular(12),
@@ -105,7 +111,11 @@ class NurseryCard extends StatelessWidget {
                   const SizedBox(height: 4),
                   Row(
                     children: [
-                      const Icon(CupertinoIcons.location_solid, size: 10, color: AppColors.secondary),
+                      const Icon(
+                        CupertinoIcons.location_solid,
+                        size: 10,
+                        color: AppColors.secondary,
+                      ),
                       const SizedBox(width: 2),
                       Expanded(
                         child: Text(
@@ -124,24 +134,32 @@ class NurseryCard extends StatelessWidget {
                   const SizedBox(height: 4),
                   Row(
                     children: [
-                      const Icon(CupertinoIcons.person_alt_circle, size: 10, color: AppColors.textSecondary),
+                      const Icon(
+                        CupertinoIcons.person_alt_circle,
+                        size: 10,
+                        color: AppColors.textSecondary,
+                      ),
                       const SizedBox(width: 4),
                       Expanded(
                         child: Text(
                           nursery['ownerName'] ?? 'Unknown',
-                          style: const TextStyle(fontSize: 10, color: AppColors.textSecondary),
+                          style: const TextStyle(
+                            fontSize: 10,
+                            color: AppColors.textSecondary,
+                          ),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
                       ),
                     ],
                   ),
+
                   const Spacer(),
                   SizedBox(
                     width: double.infinity,
                     height: 28,
                     child: ElevatedButton(
-                      onPressed: onBuyPressed,
+                      onPressed: onContactTap,
                       style: ElevatedButton.styleFrom(
                         padding: EdgeInsets.zero,
                         backgroundColor: AppColors.primary,
@@ -151,7 +169,7 @@ class NurseryCard extends StatelessWidget {
                         ),
                       ),
                       child: Text(
-                        isMarathi ? 'खरेदी करा' : 'Buy',
+                        isMarathi ? 'संपर्क साधा' : 'Contact Us',
                         style: const TextStyle(
                           color: Colors.white,
                           fontWeight: FontWeight.bold,
@@ -166,6 +184,6 @@ class NurseryCard extends StatelessWidget {
           ),
         ],
       ),
-    );
+    ));
   }
 }

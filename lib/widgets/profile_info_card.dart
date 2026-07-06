@@ -13,7 +13,7 @@ class ProfileInfoCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final userProvider = Provider.of<UserProvider>(context);
+    final userProvider = context.watch<UserProvider>();
     final totalTreesPlanted = userProvider.totalTreesPlanted;
     final badgesEarned =
         userProvider.unlockedBadges.length + (totalTreesPlanted / 10).floor();

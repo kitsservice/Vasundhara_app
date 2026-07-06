@@ -2,10 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import '../../theme/app_colors.dart';
 import 'home_screen.dart';
-import '../map/nursery_screen.dart'; // import the new nursery screen
-import '../map/map_screen.dart'; // import the new map screen
-import '../gamification/my_forest_screen.dart';
 import 'profile_screen.dart';
+import '../ola_map_screen.dart';
+import '../map/nursery_screen.dart';
+import '../gamification/my_forest_screen.dart';
 
 class MainNavigation extends StatefulWidget {
   const MainNavigation({super.key});
@@ -16,21 +16,46 @@ class MainNavigation extends StatefulWidget {
 
 class _MainNavigationState extends State<MainNavigation> {
   int _currentIndex = 0;
+  // Track which tabs have been visited for lazy initialization
+  final Set<int> _visitedIndices = {0};
 
-  final List<Widget> _screens = [
+  Widget get _mapTab => const OlaMapScreen();
+
+  late final List<Widget> _screens = [
     const HomeScreen(),
-    const NurseryScreen(), // Replaced Trees with Nursery
-    const MapScreen(), // Map Screen integrated
-    const MyForestScreen(), // My Forest
-    const ProfileScreen(), // User Profile
+    const NurseryScreen(),
+    _mapTab,
+    const MyForestScreen(),
+    const ProfileScreen(),
   ];
+
+  void _onTabTap(int index) {
+    setState(() {
+      _visitedIndices.add(index);
+      _currentIndex = index;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: IndexedStack(
-        index: _currentIndex,
-        children: _screens,
+      // Lazy IndexedStack: only build a tab once it has been visited
+      body: Stack(
+        children: List.generate(_screens.length, (i) {
+          // If this is the map tab (index 2) and it's not the current active tab, 
+          // we remove it from the widget tree entirely. Keeping native AndroidViews 
+          // inside an Offstage can cause the app to freeze when switching tabs.
+          if (i == 2 && i != _currentIndex) {
+            return const SizedBox.shrink();
+          }
+          
+          return Offstage(
+            offstage: i != _currentIndex,
+            child: _visitedIndices.contains(i)
+                ? TickerMode(enabled: i == _currentIndex, child: _screens[i])
+                : const SizedBox.shrink(),
+          );
+        }),
       ),
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
@@ -44,7 +69,7 @@ class _MainNavigationState extends State<MainNavigation> {
         ),
         child: BottomNavigationBar(
           currentIndex: _currentIndex,
-          onTap: (index) => setState(() => _currentIndex = index),
+          onTap: _onTabTap,
           backgroundColor: Colors.white,
           selectedItemColor: AppColors.primary,
           unselectedItemColor: Colors.grey.shade400,

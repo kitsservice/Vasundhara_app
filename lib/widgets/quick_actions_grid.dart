@@ -6,11 +6,11 @@ import 'package:provider/provider.dart';
 
 import '../providers/settings_provider.dart';
 import '../theme/app_colors.dart';
-import '../screens/map/map_screen.dart';
-import '../screens/core/plant_tree_screen.dart';
+import '../screens/ola_map_screen.dart';
 import '../screens/gamification/my_forest_screen.dart';
 import '../screens/gamification/user_trees_list_screen.dart';
 import '../widgets/pledge_dialog.dart';
+import '../screens/core/donate_screen.dart';
 
 class QuickActionsGrid extends StatelessWidget {
   const QuickActionsGrid({super.key});
@@ -33,14 +33,6 @@ class QuickActionsGrid extends StatelessWidget {
                 color: AppColors.textPrimary,
               ),
             ),
-            Text(
-              isMarathi ? 'सर्व पहा >' : 'View All >',
-              style: GoogleFonts.inter(
-                color: AppColors.primary,
-                fontWeight: FontWeight.w700,
-                fontSize: 14,
-              ),
-            ),
           ],
         ).animate().fade(delay: 400.ms),
         const SizedBox(height: 20),
@@ -56,13 +48,13 @@ class QuickActionsGrid extends StatelessWidget {
                 iconBackgroundColor: const Color(0xFFBBEBDB),
                 backgroundGradient: const [
                   Color(0xFFECFDF7),
-                  Color(0xFFD1F2E6)
+                  Color(0xFFD1F2E6),
                 ],
                 onTap: () {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (_) => const MapScreen(),
+                      builder: (_) => const OlaMapScreen(),
                     ),
                   );
                 },
@@ -77,7 +69,7 @@ class QuickActionsGrid extends StatelessWidget {
                 iconBackgroundColor: const Color(0xFFBADCD3),
                 backgroundGradient: const [
                   Color(0xFFECF5F2),
-                  Color(0xFFCBE5DE)
+                  Color(0xFFCBE5DE),
                 ],
                 onTap: () {
                   Navigator.push(
@@ -102,7 +94,7 @@ class QuickActionsGrid extends StatelessWidget {
                 iconBackgroundColor: const Color(0xFFB2CFC5),
                 backgroundGradient: const [
                   Color(0xFFEFF4F2),
-                  Color(0xFFC5D9D2)
+                  Color(0xFFC5D9D2),
                 ],
                 onTap: () {
                   showDialog(
@@ -121,7 +113,7 @@ class QuickActionsGrid extends StatelessWidget {
                 iconBackgroundColor: const Color(0xFFD4D8DD),
                 backgroundGradient: const [
                   Color(0xFFF9FAFB),
-                  Color(0xFFE2E2E9)
+                  Color(0xFFE2E2E9),
                 ],
                 onTap: () {
                   Navigator.push(
@@ -135,6 +127,33 @@ class QuickActionsGrid extends StatelessWidget {
             ),
           ],
         ).animate().fade(delay: 600.ms).slideY(begin: 0.1),
+        const SizedBox(height: 16),
+        Row(
+          children: [
+            Expanded(
+              child: SquareActionCard(
+                icon: CupertinoIcons.heart_solid,
+                title: isMarathi ? 'दान करा' : 'Donate',
+                iconColor: const Color(0xFFBE123C),
+                iconBackgroundColor: const Color(0xFFFECDD3),
+                backgroundGradient: const [
+                  Color(0xFFFFF1F2),
+                  Color(0xFFFEE2E2),
+                ],
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => const DonateScreen(),
+                    ),
+                  );
+                },
+              ),
+            ),
+            const SizedBox(width: 16),
+            const Expanded(child: SizedBox()),
+          ],
+        ).animate().fade(delay: 700.ms).slideY(begin: 0.1),
       ],
     );
   }

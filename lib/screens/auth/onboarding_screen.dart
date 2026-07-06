@@ -188,6 +188,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                               child: Image.asset(
                                 getOnboardingData(isMarathi)[index]['image']!,
                                 fit: BoxFit.contain,
+                                cacheWidth: 800,
                               ),
                             ),
                             const SizedBox(height: 32),

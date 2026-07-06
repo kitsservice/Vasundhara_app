@@ -10,12 +10,20 @@ import 'package:firebase_core/firebase_core.dart';
 import 'providers/settings_provider.dart';
 import 'services/notification_service.dart';
 
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await dotenv.load(fileName: '.env');
   await Firebase.initializeApp();
 
-  await NotificationService().initialize();
-  await NotificationService().scheduleDailyWateringReminders();
+  // Notification setup is non-critical — don't block startup if it fails
+  try {
+    await NotificationService().initialize();
+    await NotificationService().scheduleDailyWateringReminders();
+  } catch (e) {
+    debugPrint('NotificationService init failed: $e');
+  }
 
   runApp(const VasundharaApp());
 }

@@ -4,9 +4,11 @@ import 'package:provider/provider.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:location/location.dart' as loc;
 import '../../theme/app_colors.dart';
 import '../../widgets/nursery_card.dart';
+import 'nursery_storefront_screen.dart';
 
 class NurseryScreen extends StatefulWidget {
   const NurseryScreen({super.key});
@@ -19,7 +21,7 @@ class _NurseryScreenState extends State<NurseryScreen> {
   Position? _currentPosition;
   bool _isLoadingLocation = true;
   bool _locationError = false;
-  
+
   final List<Map<String, dynamic>> _processedNurseries = [];
 
   @override
@@ -80,7 +82,7 @@ class _NurseryScreenState extends State<NurseryScreen> {
   @override
   Widget build(BuildContext context) {
     final isMarathi = context.watch<SettingsProvider>().isMarathi;
-    
+
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
@@ -106,7 +108,9 @@ class _NurseryScreenState extends State<NurseryScreen> {
         ],
       ),
       body: _isLoadingLocation
-          ? const Center(child: CircularProgressIndicator(color: AppColors.primary))
+          ? const Center(
+              child: CircularProgressIndicator(color: AppColors.primary),
+            )
           : _locationError
               ? Center(
                   child: Padding(
@@ -114,14 +118,21 @@ class _NurseryScreenState extends State<NurseryScreen> {
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        const Icon(CupertinoIcons.location_slash, size: 64, color: Colors.grey),
+                        const Icon(
+                          CupertinoIcons.location_slash,
+                          size: 64,
+                          color: Colors.grey,
+                        ),
                         const SizedBox(height: 16),
                         Text(
                           isMarathi
                               ? 'अंतर मोजण्यासाठी स्थान प्रवेश आवश्यक आहे.'
                               : 'Location access is required to calculate distances.',
                           textAlign: TextAlign.center,
-                          style: const TextStyle(color: AppColors.textSecondary, fontSize: 16),
+                          style: const TextStyle(
+                            color: AppColors.textSecondary,
+                            fontSize: 16,
+                          ),
                         ),
                         const SizedBox(height: 16),
                         ElevatedButton(
@@ -132,23 +143,34 @@ class _NurseryScreenState extends State<NurseryScreen> {
                             });
                             _fetchUserLocation();
                           },
-                          child: Text(isMarathi ? 'पुन्हा प्रयत्न करा' : 'Try Again'),
+                          child: Text(
+                            isMarathi ? 'पुन्हा प्रयत्न करा' : 'Try Again',
+                          ),
                         ),
                       ],
                     ),
                   ),
                 )
               : StreamBuilder<QuerySnapshot>(
-                  stream: FirebaseFirestore.instance.collection('nurseries').snapshots(),
+                  stream: FirebaseFirestore.instance
+                      .collection('nurseries')
+                      .snapshots(),
                   builder: (context, snapshot) {
                     if (snapshot.connectionState == ConnectionState.waiting) {
-                      return const Center(child: CircularProgressIndicator(color: AppColors.primary));
+                      return const Center(
+                        child: CircularProgressIndicator(
+                          color: AppColors.primary,
+                        ),
+                      );
                     }
                     if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
                       return Center(
                         child: Text(
-                          isMarathi ? 'रोपवाटिका उपलब्ध नाहीत' : 'No nurseries available',
-                          style: const TextStyle(color: AppColors.textSecondary),
+                          isMarathi
+                              ? 'रोपवाटिका उपलब्ध नाहीत'
+                              : 'No nurseries available',
+                          style:
+                              const TextStyle(color: AppColors.textSecondary),
                         ),
                       );
                     }
@@ -156,7 +178,7 @@ class _NurseryScreenState extends State<NurseryScreen> {
                     // Process and sort nurseries
                     final docs = snapshot.data!.docs;
                     _processedNurseries.clear();
-                    
+
                     for (var doc in docs) {
                       final data = doc.data() as Map<String, dynamic>;
                       final location = data['location'] as GeoPoint?;
@@ -184,21 +206,24 @@ class _NurseryScreenState extends State<NurseryScreen> {
                     }
 
                     _processedNurseries.sort(
-                      (a, b) => (a['distanceMeters'] as double).compareTo(b['distanceMeters'] as double),
+                      (a, b) => (a['distanceMeters'] as double)
+                          .compareTo(b['distanceMeters'] as double),
                     );
 
                     return GridView.builder(
                       padding: const EdgeInsets.all(16),
-                      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                      gridDelegate:
+                          const SliverGridDelegateWithFixedCrossAxisCount(
                         crossAxisCount: 2,
                         mainAxisSpacing: 16,
                         crossAxisSpacing: 16,
-                        childAspectRatio: 0.85, // Almost square, adjusted slightly to comfortably fit the text
+                        childAspectRatio:
+                            0.85, // Almost square, adjusted slightly to comfortably fit the text
                       ),
                       itemCount: _processedNurseries.length,
                       itemBuilder: (context, index) {
                         final nursery = _processedNurseries[index];
-                        
+
                         String distanceText;
                         final double m = nursery['distanceMeters'];
                         if (m == double.infinity) {
@@ -213,16 +238,47 @@ class _NurseryScreenState extends State<NurseryScreen> {
                           nursery: nursery,
                           distanceText: distanceText,
                           isMarathi: isMarathi,
-                          onBuyPressed: () {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text(
-                                  isMarathi
-                                      ? 'खरेदी वैशिष्ट्य लवकरच येत आहे!'
-                                      : 'Buying feature coming soon!',
+                          onCardTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => NurseryStorefrontScreen(
+                                  nurseryData: nursery,
+                                  nurseryId: nursery['id'],
                                 ),
                               ),
                             );
+                          },
+                          onContactTap: () async {
+                            final mobileNo = nursery['mobileNo']?.toString() ?? '';
+                            if (mobileNo.isEmpty) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text(
+                                    isMarathi
+                                        ? 'नर्सरीचा संपर्क क्रमांक उपलब्ध नाही.'
+                                        : 'Contact number not available for this nursery.',
+                                  ),
+                                ),
+                              );
+                              return;
+                            }
+                            final Uri url = Uri.parse('tel:$mobileNo');
+                            if (await canLaunchUrl(url)) {
+                              await launchUrl(url);
+                            } else {
+                              if (context.mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text(
+                                      isMarathi
+                                          ? 'कॉल करता आला नाही.'
+                                          : 'Could not launch the phone dialer.',
+                                    ),
+                                  ),
+                                );
+                              }
+                            }
                           },
                         );
                       },

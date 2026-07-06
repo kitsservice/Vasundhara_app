@@ -14,8 +14,9 @@ class CertificatesScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isMarathi = context.watch<SettingsProvider>().isMarathi;
-    final userProvider = context.watch<UserProvider>();
-    final treesPlanted = userProvider.totalTreesPlanted;
+    final treesPlanted = context.select<UserProvider, int>(
+      (provider) => provider.totalTreesPlanted,
+    );
     final userName =
         FirebaseAuth.instance.currentUser?.displayName ?? 'Green Guardian';
 

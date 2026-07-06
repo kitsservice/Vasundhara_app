@@ -41,6 +41,7 @@ class CertificateCard extends StatelessWidget {
               Image.asset(
                 backgroundAsset,
                 fit: BoxFit.cover,
+                cacheWidth: 800,
                 errorBuilder: (context, error, stackTrace) {
                   // Fallback if the real asset isn't added yet
                   return Container(

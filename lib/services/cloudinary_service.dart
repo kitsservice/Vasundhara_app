@@ -25,12 +25,10 @@ class CloudinaryService {
       if (response.statusCode == 200) {
         return jsonMap['secure_url'];
       } else {
-        debugPrint('Cloudinary upload failed: ${jsonMap['error']['message']}');
-        return null;
+        throw Exception(jsonMap['error']['message'] ?? 'Unknown Cloudinary Error');
       }
     } catch (e) {
-      debugPrint('Cloudinary upload exception: $e');
-      return null;
+      throw Exception(e.toString());
     }
   }
 }

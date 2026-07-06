@@ -113,4 +113,22 @@ class AuthProvider extends ChangeNotifier {
       _setLoading(false);
     }
   }
+
+  Future<bool> resetPassword(String email) async {
+    _setLoading(true);
+    _setError(null);
+    try {
+      await _auth.sendPasswordResetEmail(email: email);
+      _setLoading(false);
+      return true;
+    } on FirebaseAuthException catch (e) {
+      _setError(e.message ?? 'An error occurred during password reset.');
+      _setLoading(false);
+      return false;
+    } catch (e) {
+      _setError(e.toString());
+      _setLoading(false);
+      return false;
+    }
+  }
 }

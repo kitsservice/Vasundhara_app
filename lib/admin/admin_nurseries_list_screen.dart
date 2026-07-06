@@ -3,9 +3,18 @@ import 'package:flutter/cupertino.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../theme/app_colors.dart';
+import 'admin_nursery_inventory_screen.dart';
 
-class AdminNurseriesListScreen extends StatelessWidget {
+class AdminNurseriesListScreen extends StatefulWidget {
   const AdminNurseriesListScreen({super.key});
+
+  @override
+  State<AdminNurseriesListScreen> createState() =>
+      _AdminNurseriesListScreenState();
+}
+
+class _AdminNurseriesListScreenState extends State<AdminNurseriesListScreen> {
+  String _searchQuery = '';
 
   Future<void> _deleteNursery(
     BuildContext context,
@@ -85,149 +94,215 @@ class AdminNurseriesListScreen extends StatelessWidget {
         elevation: 0,
         iconTheme: const IconThemeData(color: AppColors.textPrimary),
       ),
-      body: StreamBuilder<QuerySnapshot>(
-        stream: FirebaseFirestore.instance
-            .collection('nurseries')
-            .orderBy('createdAt', descending: true)
-            .snapshots(),
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(
-              child: CircularProgressIndicator(color: AppColors.primary),
-            );
-          }
-          if (snapshot.hasError) {
-            return const Center(
-              child: Text('An error occurred loading nurseries.'),
-            );
-          }
-          if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-            return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Icon(
-                    CupertinoIcons.leaf_arrow_circlepath,
-                    size: 64,
-                    color: Colors.grey,
-                  ),
-                  const SizedBox(height: 16),
-                  Text(
-                    'No Nurseries Registered',
-                    style: GoogleFonts.outfit(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                      color: AppColors.textPrimary,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'Use the + button on the dashboard to add one.',
-                    style: GoogleFonts.inter(color: AppColors.textSecondary),
-                  ),
-                ],
-              ),
-            );
-          }
-
-          final docs = snapshot.data!.docs;
-
-          return ListView.builder(
-            padding: const EdgeInsets.all(20),
-            itemCount: docs.length,
-            itemBuilder: (context, index) {
-              final doc = docs[index];
-              final data = doc.data() as Map<String, dynamic>;
-
-              final name = data['name_en'] ?? 'Unknown Nursery';
-              final ownerName = data['ownerName'] ?? 'No owner';
-              final mobileNo = data['mobileNo'] ?? 'No mobile number';
-              final plants = data['plants'] ?? 'No plants listed';
-              final address = data['address'] ?? 'Unknown address';
-
-              return Container(
-                margin: const EdgeInsets.only(bottom: 16),
-                decoration: BoxDecoration(
-                  color: Colors.white,
+      body: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: TextField(
+              decoration: InputDecoration(
+                hintText: 'Search nurseries...',
+                prefixIcon: const Icon(
+                  CupertinoIcons.search,
+                  color: AppColors.textSecondary,
+                ),
+                filled: true,
+                fillColor: Colors.white,
+                border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(16),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.04),
-                      blurRadius: 10,
-                      offset: const Offset(0, 4),
-                    ),
-                  ],
+                  borderSide: BorderSide.none,
                 ),
-                child: ListTile(
-                  contentPadding:
-                      const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                  leading: Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: AppColors.primary.withValues(alpha: 0.1),
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Icon(
-                      CupertinoIcons.tree,
-                      color: AppColors.primary,
-                    ),
-                  ),
-                  title: Text(
-                    name,
-                    style: GoogleFonts.inter(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 16,
-                      color: AppColors.textPrimary,
-                    ),
-                  ),
-                  subtitle: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const SizedBox(height: 4),
-                      Text(
-                        address,
-                        style: GoogleFonts.inter(
-                          fontSize: 12,
-                          color: AppColors.textSecondary,
+                contentPadding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+              ),
+              onChanged: (val) {
+                setState(() {
+                  _searchQuery = val.toLowerCase();
+                });
+              },
+            ),
+          ),
+          Expanded(
+            child: StreamBuilder<QuerySnapshot>(
+              stream: FirebaseFirestore.instance
+                  .collection('nurseries')
+                  .orderBy('createdAt', descending: true)
+                  .snapshots(),
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Center(
+                    child: CircularProgressIndicator(color: AppColors.primary),
+                  );
+                }
+                if (snapshot.hasError) {
+                  return const Center(
+                    child: Text('An error occurred loading nurseries.'),
+                  );
+                }
+                if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+                  return Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Icon(
+                          CupertinoIcons.leaf_arrow_circlepath,
+                          size: 64,
+                          color: Colors.grey,
                         ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        'Owner: $ownerName • $mobileNo',
-                        style: GoogleFonts.inter(
-                          fontSize: 12,
-                          color: AppColors.textPrimary,
-                          fontWeight: FontWeight.w500,
+                        const SizedBox(height: 16),
+                        Text(
+                          'No Nurseries Registered',
+                          style: GoogleFonts.outfit(
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                            color: AppColors.textPrimary,
+                          ),
                         ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        'Plants: $plants',
-                        style: GoogleFonts.inter(
-                          fontSize: 12,
-                          color: AppColors.textSecondary,
+                        const SizedBox(height: 8),
+                        Text(
+                          'Use the + button on the dashboard to add one.',
+                          style:
+                              GoogleFonts.inter(color: AppColors.textSecondary),
                         ),
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ],
-                  ),
-                  trailing: IconButton(
-                    icon: const Icon(
-                      CupertinoIcons.trash,
-                      color: Colors.redAccent,
+                      ],
                     ),
-                    onPressed: () => _deleteNursery(context, doc.id, name),
-                  ),
-                ),
-              );
-            },
-          );
-        },
+                  );
+                }
+
+                final docs = snapshot.data!.docs.where((doc) {
+                  if (_searchQuery.isEmpty) return true;
+                  final data = doc.data() as Map<String, dynamic>;
+                  final name = (data['name_en'] ?? '').toString().toLowerCase();
+                  final owner =
+                      (data['ownerName'] ?? '').toString().toLowerCase();
+                  final address =
+                      (data['address'] ?? '').toString().toLowerCase();
+                  return name.contains(_searchQuery) ||
+                      owner.contains(_searchQuery) ||
+                      address.contains(_searchQuery);
+                }).toList();
+
+                if (docs.isEmpty) {
+                  return const Center(
+                    child: Text('No nurseries found matching your search.'),
+                  );
+                }
+
+                return ListView.builder(
+                  padding: const EdgeInsets.all(20),
+                  itemCount: docs.length,
+                  itemBuilder: (context, index) {
+                    final doc = docs[index];
+                    final data = doc.data() as Map<String, dynamic>;
+
+                    final name = data['name_en'] ?? 'Unknown Nursery';
+                    final ownerName = data['ownerName'] ?? 'No owner';
+                    final mobileNo = data['mobileNo'] ?? 'No mobile number';
+                    final plants = data['plants'] ?? 'No plants listed';
+                    final address = data['address'] ?? 'Unknown address';
+
+                    return Container(
+                      margin: const EdgeInsets.only(bottom: 16),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(16),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.04),
+                            blurRadius: 10,
+                            offset: const Offset(0, 4),
+                          ),
+                        ],
+                      ),
+                      child: InkWell(
+                        borderRadius: BorderRadius.circular(16),
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => AdminNurseryInventoryScreen(
+                                nurseryId: doc.id,
+                                nurseryName: name,
+                              ),
+                            ),
+                          );
+                        },
+                        child: ListTile(
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 12,
+                          ),
+                          leading: Container(
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: AppColors.primary.withValues(alpha: 0.1),
+                              shape: BoxShape.circle,
+                            ),
+                            child: const Icon(
+                              CupertinoIcons.tree,
+                              color: AppColors.primary,
+                            ),
+                          ),
+                          title: Text(
+                            name,
+                            style: GoogleFonts.inter(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 16,
+                              color: AppColors.textPrimary,
+                            ),
+                          ),
+                          subtitle: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const SizedBox(height: 4),
+                              Text(
+                                address,
+                                style: GoogleFonts.inter(
+                                  fontSize: 12,
+                                  color: AppColors.textSecondary,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                'Owner: $ownerName • $mobileNo',
+                                style: GoogleFonts.inter(
+                                  fontSize: 12,
+                                  color: AppColors.textPrimary,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                'Plants: $plants',
+                                style: GoogleFonts.inter(
+                                  fontSize: 12,
+                                  color: AppColors.textSecondary,
+                                ),
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ],
+                          ),
+                          trailing: IconButton(
+                            icon: const Icon(
+                              CupertinoIcons.trash,
+                              color: Colors.redAccent,
+                            ),
+                            onPressed: () =>
+                                _deleteNursery(context, doc.id, name),
+                          ),
+                        ),
+                      ),
+                    );
+                  },
+                );
+              },
+            ),
+          ),
+        ],
       ),
     );
   }

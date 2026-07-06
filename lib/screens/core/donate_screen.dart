@@ -21,6 +21,7 @@ class _DonateScreenState extends State<DonateScreen> {
   final _phoneController = TextEditingController();
   final _quantityController = TextEditingController();
   final _addressController = TextEditingController();
+  final _reasonController = TextEditingController();
   String _selectedDonationType = 'Trees / Saplings';
 
   final List<String> _donationTypesEn = [
@@ -43,6 +44,7 @@ class _DonateScreenState extends State<DonateScreen> {
     _phoneController.dispose();
     _quantityController.dispose();
     _addressController.dispose();
+    _reasonController.dispose();
     super.dispose();
   }
 
@@ -164,14 +166,18 @@ class _DonateScreenState extends State<DonateScreen> {
                           _donationTypesEn.indexOf(_selectedDonationType)]
                       : _selectedDonationType,
                   decoration: const InputDecoration(
-                    prefixIcon: Icon(CupertinoIcons.gift_fill,
-                        color: AppColors.primary),
+                    prefixIcon: Icon(
+                      CupertinoIcons.gift_fill,
+                      color: AppColors.primary,
+                    ),
                     border: InputBorder.none,
                     contentPadding:
                         EdgeInsets.symmetric(horizontal: 16, vertical: 16),
                   ),
-                  icon: const Icon(CupertinoIcons.chevron_down,
-                      color: Colors.grey),
+                  icon: const Icon(
+                    CupertinoIcons.chevron_down,
+                    color: Colors.grey,
+                  ),
                   items: currentTypes.map((type) {
                     return DropdownMenuItem<String>(
                       value: type,
@@ -203,8 +209,8 @@ class _DonateScreenState extends State<DonateScreen> {
 
               // Quantity / Details
               CustomLabel(
-                  text:
-                      isMarathi ? 'तपशील किंवा प्रमाण' : 'Details or Quantity'),
+                text: isMarathi ? 'तपशील किंवा प्रमाण' : 'Details or Quantity',
+              ),
               CustomTextField(
                 controller: _quantityController,
                 icon: CupertinoIcons.info_circle_fill,
@@ -219,7 +225,8 @@ class _DonateScreenState extends State<DonateScreen> {
 
               // Location / Address
               CustomLabel(
-                  text: isMarathi ? 'पत्ता / ठिकाण' : 'Address / Location'),
+                text: isMarathi ? 'पत्ता / ठिकाण' : 'Address / Location',
+              ),
               CustomTextField(
                 controller: _addressController,
                 icon: CupertinoIcons.location_solid,
@@ -231,6 +238,24 @@ class _DonateScreenState extends State<DonateScreen> {
                     ? 'कृपया पत्ता प्रविष्ट करा'
                     : 'Please enter an address',
               ).animate().fadeIn(delay: 600.ms),
+              const SizedBox(height: 20),
+
+              // Reason for Donation
+              CustomLabel(
+                text:
+                    isMarathi ? 'दानाचा उद्देश / कारण' : 'Reason for Donation',
+              ),
+              CustomTextField(
+                controller: _reasonController,
+                icon: CupertinoIcons.text_quote,
+                hintText: isMarathi
+                    ? 'दानाचा उद्देश सांगा (उदा. वाढदिवस, स्मरणार्थ)'
+                    : 'State the reason (e.g. Birthday, Memorial)',
+                maxLines: 2,
+                validatorText: isMarathi
+                    ? 'कृपया दानाचे कारण सांगा'
+                    : 'Please provide a reason',
+              ).animate().fadeIn(delay: 650.ms),
               const SizedBox(height: 40),
 
               // Submit Button

@@ -16,6 +16,18 @@ class _AdminCampaignViewState extends State<AdminCampaignView> {
   final titleController = TextEditingController();
   final targetController = TextEditingController();
   final announcementController = TextEditingController();
+  String selectedProgramType = 'Tree Plantation';
+  final List<String> programTypes = [
+    'Tree Plantation',
+    'Facilitation Program',
+    'Awareness Drive',
+  ];
+
+  final eventNameController = TextEditingController();
+  final eventDateController = TextEditingController();
+  final eventLocationController = TextEditingController();
+  final eventDescriptionController = TextEditingController();
+
   bool isLoading = true;
 
   @override
@@ -34,9 +46,11 @@ class _AdminCampaignViewState extends State<AdminCampaignView> {
         titleController.text =
             doc.data()?['title'] ?? 'Green Vasundhara Abhiyan';
         targetController.text = doc.data()?['target']?.toString() ?? '50000';
+        selectedProgramType = doc.data()?['programType'] ?? 'Tree Plantation';
       } else {
         titleController.text = 'Green Vasundhara Abhiyan';
         targetController.text = '50000';
+        selectedProgramType = 'Tree Plantation';
       }
     } catch (e) {
       debugPrint('Error loading campaign data: $e');
@@ -52,6 +66,7 @@ class _AdminCampaignViewState extends State<AdminCampaignView> {
       await FirebaseFirestore.instance.collection('admin').doc('campaign').set({
         'title': titleController.text.trim(),
         'target': int.tryParse(targetController.text.trim()) ?? 50000,
+        'programType': selectedProgramType,
         'updatedAt': FieldValue.serverTimestamp(),
       });
       if (mounted) {
@@ -100,12 +115,97 @@ class _AdminCampaignViewState extends State<AdminCampaignView> {
     }
   }
 
+  Future<void> _pickDateTime() async {
+    final date = await showDatePicker(
+      context: context,
+      initialDate: DateTime.now(),
+      firstDate: DateTime.now(),
+      lastDate: DateTime.now().add(const Duration(days: 365)),
+    );
+    if (date != null && mounted) {
+      final time = await showTimePicker(
+        context: context,
+        initialTime: TimeOfDay.now(),
+      );
+      if (time != null && mounted) {
+        final formattedDate = '${date.day}/${date.month}/${date.year}';
+        final formattedTime = time.format(context);
+        eventDateController.text = '$formattedDate, $formattedTime';
+      }
+    }
+  }
+
+  Future<void> _postOrganizedProgram() async {
+    final name = eventNameController.text.trim();
+    final date = eventDateController.text.trim();
+    final location = eventLocationController.text.trim();
+    final description = eventDescriptionController.text.trim();
+
+    if (name.isEmpty || date.isEmpty || location.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please fill all required event details.'),
+        ),
+      );
+      return;
+    }
+
+    try {
+      await FirebaseFirestore.instance.collection('announcements').add({
+        'title': 'New Program: $name',
+        'message': 'Date: $date\nLocation: $location\n\n$description',
+        'type': 'organized_program',
+        'createdAt': FieldValue.serverTimestamp(),
+      });
+      eventNameController.clear();
+      eventDateController.clear();
+      eventLocationController.clear();
+      eventDescriptionController.clear();
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text('Program Posted & Users Notified!'),
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+            ),
+            backgroundColor: AppColors.primary,
+          ),
+        );
+      }
+    } catch (e) {
+      debugPrint('Error posting program: $e');
+    }
+  }
+
   @override
   void dispose() {
     titleController.dispose();
     targetController.dispose();
     announcementController.dispose();
+    eventNameController.dispose();
+    eventDateController.dispose();
+    eventLocationController.dispose();
+    eventDescriptionController.dispose();
     super.dispose();
+  }
+
+  InputDecoration _inputDecoration(String hint, IconData icon) {
+    return InputDecoration(
+      hintText: hint,
+      prefixIcon: Icon(icon, color: Colors.blue),
+      filled: true,
+      fillColor: Colors.grey.shade50,
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(16),
+        borderSide: BorderSide.none,
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(16),
+        borderSide: const BorderSide(color: Colors.blue, width: 2),
+      ),
+    );
   }
 
   @override
@@ -185,6 +285,54 @@ class _AdminCampaignViewState extends State<AdminCampaignView> {
                   ],
                 ),
                 const SizedBox(height: 32),
+
+                // Program Type Field
+                Text(
+                  'Program Type',
+                  style: GoogleFonts.inter(
+                    fontWeight: FontWeight.w600,
+                    fontSize: 14,
+                    color: AppColors.textSecondary,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                DropdownButtonFormField<String>(
+                  initialValue: selectedProgramType,
+                  items: programTypes.map((type) {
+                    return DropdownMenuItem(
+                      value: type,
+                      child: Text(
+                        type,
+                        style: GoogleFonts.inter(fontWeight: FontWeight.w500),
+                      ),
+                    );
+                  }).toList(),
+                  onChanged: (value) {
+                    if (value != null) {
+                      setState(() {
+                        selectedProgramType = value;
+                      });
+                    }
+                  },
+                  decoration: InputDecoration(
+                    prefixIcon: const Icon(
+                      CupertinoIcons.tree,
+                      color: AppColors.primary,
+                    ),
+                    filled: true,
+                    fillColor: Colors.grey.shade50,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(16),
+                      borderSide: BorderSide.none,
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(16),
+                      borderSide:
+                          const BorderSide(color: AppColors.primary, width: 2),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 24),
 
                 // Title Field
                 Text(
@@ -385,6 +533,175 @@ class _AdminCampaignViewState extends State<AdminCampaignView> {
               ],
             ),
           ).animate().fadeIn(delay: 300.ms).slideY(begin: 0.1),
+
+          const SizedBox(height: 32),
+
+          // Post Organized Program Section
+          Container(
+            padding: const EdgeInsets.all(24),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(24),
+              border: Border.all(color: Colors.grey.shade200),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.04),
+                  blurRadius: 20,
+                  offset: const Offset(0, 10),
+                ),
+              ],
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: Colors.blue.withValues(alpha: 0.1),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(
+                        CupertinoIcons.calendar_today,
+                        color: Colors.blue,
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: Text(
+                        'Post Organized Program',
+                        style: GoogleFonts.outfit(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 18,
+                          color: AppColors.textPrimary,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 32),
+
+                // Event Name
+                Text(
+                  'Program Name',
+                  style: GoogleFonts.inter(
+                    fontWeight: FontWeight.w600,
+                    fontSize: 14,
+                    color: AppColors.textSecondary,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                TextField(
+                  controller: eventNameController,
+                  decoration: _inputDecoration(
+                    'e.g. Sunday Mega Plantation',
+                    CupertinoIcons.tag,
+                  ),
+                ),
+                const SizedBox(height: 16),
+
+                // Event Date & Location
+                Row(
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Date & Time',
+                            style: GoogleFonts.inter(
+                              fontWeight: FontWeight.w600,
+                              fontSize: 14,
+                              color: AppColors.textSecondary,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          TextField(
+                            controller: eventDateController,
+                            readOnly: true,
+                            onTap: _pickDateTime,
+                            decoration: _inputDecoration(
+                              'Select Date & Time',
+                              CupertinoIcons.calendar,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Location',
+                            style: GoogleFonts.inter(
+                              fontWeight: FontWeight.w600,
+                              fontSize: 14,
+                              color: AppColors.textSecondary,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          TextField(
+                            controller: eventLocationController,
+                            decoration: _inputDecoration(
+                              'e.g. Central Park',
+                              CupertinoIcons.location,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+
+                // Event Description
+                Text(
+                  'Description',
+                  style: GoogleFonts.inter(
+                    fontWeight: FontWeight.w600,
+                    fontSize: 14,
+                    color: AppColors.textSecondary,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                TextField(
+                  controller: eventDescriptionController,
+                  maxLines: 3,
+                  decoration: _inputDecoration(
+                    'Enter program details...',
+                    CupertinoIcons.text_alignleft,
+                  ),
+                ),
+                const SizedBox(height: 24),
+
+                SizedBox(
+                  width: double.infinity,
+                  height: 56,
+                  child: ElevatedButton(
+                    onPressed: _postOrganizedProgram,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.blue,
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                    ),
+                    child: Text(
+                      'Post Program & Notify Users',
+                      style: GoogleFonts.inter(
+                        color: Colors.white,
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ).animate().fadeIn(delay: 400.ms).slideY(begin: 0.1),
         ],
       ),
     );

@@ -24,26 +24,32 @@ class _UserTreesListScreenState extends State<UserTreesListScreen> {
   Future<void> _uploadGrowthPhoto(String treeId) async {
     final picker = ImagePicker();
     final pickedFile = await picker.pickImage(source: ImageSource.camera);
-    
+
     if (pickedFile != null) {
       setState(() {
         _uploadingStates[treeId] = true;
       });
-      
+
       try {
         final File imageFile = File(pickedFile.path);
         // Upload to Cloudinary
         final String? imageUrl = await CloudinaryService.uploadImage(imageFile);
-        
+
         if (imageUrl != null) {
+          if (!mounted) return;
           // Update Firestore via UserProvider
-          await Provider.of<UserProvider>(context, listen: false).uploadGrowthPhoto(treeId, imageUrl);
-          
+          await context.read<UserProvider>()
+              .uploadGrowthPhoto(treeId, imageUrl);
+
           if (mounted) {
             final isMarathi = context.read<SettingsProvider>().isMarathi;
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
-                content: Text(isMarathi ? 'फोटो यशस्वीरित्या अपलोड झाला!' : 'Photo uploaded successfully!'),
+                content: Text(
+                  isMarathi
+                      ? 'फोटो यशस्वीरित्या अपलोड झाला!'
+                      : 'Photo uploaded successfully!',
+                ),
                 backgroundColor: AppColors.success,
               ),
             );
@@ -55,7 +61,11 @@ class _UserTreesListScreenState extends State<UserTreesListScreen> {
           final isMarathi = context.read<SettingsProvider>().isMarathi;
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text(isMarathi ? 'फोटो अपलोड करण्यात त्रुटी.' : 'Error uploading photo.'),
+              content: Text(
+                isMarathi
+                    ? 'फोटो अपलोड करण्यात त्रुटी.'
+                    : 'Error uploading photo.',
+              ),
               backgroundColor: Colors.redAccent,
             ),
           );
@@ -73,12 +83,12 @@ class _UserTreesListScreenState extends State<UserTreesListScreen> {
   @override
   Widget build(BuildContext context) {
     final isMarathi = context.watch<SettingsProvider>().isMarathi;
-    final userProvider = context.watch<UserProvider>();
-    final trees = userProvider.plantedTrees;
+    final trees = context.select<UserProvider, List<PlantedTree>>(
+      (provider) => provider.plantedTrees,
+    );
 
-    // Sort trees: newest planted first
-    final sortedTrees = List<PlantedTree>.from(trees)
-      ..sort((a, b) => b.datePlanted.compareTo(a.datePlanted));
+    // Trees are already sorted by the provider
+    final sortedTrees = trees;
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -106,7 +116,9 @@ class _UserTreesListScreenState extends State<UserTreesListScreen> {
                   ),
                   const SizedBox(height: 16),
                   Text(
-                    isMarathi ? 'अद्याप कोणतीही झाडे लावली नाहीत' : 'No trees planted yet',
+                    isMarathi
+                        ? 'अद्याप कोणतीही झाडे लावली नाहीत'
+                        : 'No trees planted yet',
                     style: GoogleFonts.outfit(
                       fontSize: 20,
                       fontWeight: FontWeight.bold,
@@ -122,7 +134,8 @@ class _UserTreesListScreenState extends State<UserTreesListScreen> {
               itemBuilder: (context, index) {
                 final tree = sortedTrees[index];
                 final bool isUploading = _uploadingStates[tree.id] ?? false;
-                final bool hasGrowthPhoto = tree.growthImageUrl != null && tree.growthImageUrl!.isNotEmpty;
+                final bool hasGrowthPhoto = tree.growthImageUrl != null &&
+                    tree.growthImageUrl!.isNotEmpty;
 
                 return Container(
                   margin: const EdgeInsets.only(bottom: 16),
@@ -157,11 +170,15 @@ class _UserTreesListScreenState extends State<UserTreesListScreen> {
                                 : null,
                           ),
                           child: tree.imageUrl == null
-                              ? const Icon(CupertinoIcons.tree, color: AppColors.primary, size: 32)
+                              ? const Icon(
+                                  CupertinoIcons.tree,
+                                  color: AppColors.primary,
+                                  size: 32,
+                                )
                               : null,
                         ),
                         const SizedBox(width: 16),
-                        
+
                         // Details
                         Expanded(
                           child: Column(
@@ -193,24 +210,34 @@ class _UserTreesListScreenState extends State<UserTreesListScreen> {
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
                               ),
-                              
+
                               const SizedBox(height: 12),
-                              
+
                               // Action Button / Status
                               if (hasGrowthPhoto)
                                 Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 12,
+                                    vertical: 6,
+                                  ),
                                   decoration: BoxDecoration(
-                                    color: AppColors.success.withValues(alpha: 0.1),
+                                    color: AppColors.success
+                                        .withValues(alpha: 0.1),
                                     borderRadius: BorderRadius.circular(8),
                                   ),
                                   child: Row(
                                     mainAxisSize: MainAxisSize.min,
                                     children: [
-                                      const Icon(CupertinoIcons.check_mark_circled_solid, color: AppColors.success, size: 16),
+                                      const Icon(
+                                        CupertinoIcons.check_mark_circled_solid,
+                                        color: AppColors.success,
+                                        size: 16,
+                                      ),
                                       const SizedBox(width: 6),
                                       Text(
-                                        isMarathi ? 'वाढीचा फोटो जोडला' : 'Growth Photo Added',
+                                        isMarathi
+                                            ? 'वाढीचा फोटो जोडला'
+                                            : 'Growth Photo Added',
                                         style: GoogleFonts.inter(
                                           fontSize: 12,
                                           fontWeight: FontWeight.w600,
@@ -225,16 +252,27 @@ class _UserTreesListScreenState extends State<UserTreesListScreen> {
                                   width: double.infinity,
                                   height: 36,
                                   child: ElevatedButton.icon(
-                                    onPressed: isUploading || tree.id == null ? null : () => _uploadGrowthPhoto(tree.id!),
+                                    onPressed: isUploading || tree.id == null
+                                        ? null
+                                        : () => _uploadGrowthPhoto(tree.id!),
                                     icon: isUploading
                                         ? const SizedBox(
                                             width: 14,
                                             height: 14,
-                                            child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                                            child: CircularProgressIndicator(
+                                              color: Colors.white,
+                                              strokeWidth: 2,
+                                            ),
                                           )
-                                        : const Icon(CupertinoIcons.camera_fill, size: 16, color: Colors.white),
+                                        : const Icon(
+                                            CupertinoIcons.camera_fill,
+                                            size: 16,
+                                            color: Colors.white,
+                                          ),
                                     label: Text(
-                                      isMarathi ? 'वाढीचा फोटो अपलोड करा' : 'Upload Growth Photo',
+                                      isMarathi
+                                          ? 'वाढीचा फोटो अपलोड करा'
+                                          : 'Upload Growth Photo',
                                       style: GoogleFonts.inter(
                                         fontSize: 12,
                                         fontWeight: FontWeight.bold,
@@ -244,7 +282,9 @@ class _UserTreesListScreenState extends State<UserTreesListScreen> {
                                     style: ElevatedButton.styleFrom(
                                       backgroundColor: AppColors.primary,
                                       elevation: 0,
-                                      padding: const EdgeInsets.symmetric(horizontal: 12),
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 12,
+                                      ),
                                       shape: RoundedRectangleBorder(
                                         borderRadius: BorderRadius.circular(8),
                                       ),

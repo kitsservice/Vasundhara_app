@@ -1,0 +1,22 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="48dp"
+    android:height="48dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    
+    <!-- Outer Circle Badge (Green) -->
+    <path
+        android:fillColor="#047857"
+        android:pathData="M12,2C6.48,2 2,6.48 2,12s4.48,10 10,10 10,-4.48 10,-10S17.52,2 12,2z" />
+        
+    <!-- White border -->
+    <path
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="1.5"
+        android:pathData="M12,2C6.48,2 2,6.48 2,12s4.48,10 10,10 10,-4.48 10,-10S17.52,2 12,2z" />
+        
+    <!-- Tree/Leaf Icon (White) -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M17,12c0,-2.76 -2.24,-5 -5,-5s-5,2.24 -5,5c0,2.56 1.93,4.68 4.4,4.96V19h1.2v-2.04C15.07,16.68 17,14.56 17,12z" />
+</vector>

@@ -146,10 +146,16 @@ class NotificationService {
           hideExpandedLargeIcon: false,
         ),
         actions: <AndroidNotificationAction>[
-          AndroidNotificationAction('WATERED_ACTION', 'Watered!',
-              showsUserInterface: true),
-          AndroidNotificationAction('SNOOZE_ACTION', 'Snooze',
-              showsUserInterface: true),
+          AndroidNotificationAction(
+            'WATERED_ACTION',
+            'Watered!',
+            showsUserInterface: true,
+          ),
+          AndroidNotificationAction(
+            'SNOOZE_ACTION',
+            'Snooze',
+            showsUserInterface: true,
+          ),
         ],
       ),
       iOS: DarwinNotificationDetails(),
