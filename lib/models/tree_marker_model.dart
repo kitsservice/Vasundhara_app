@@ -3,6 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 class TreeMarkerModel {
   final String id;
   final String treeName;
+  final String userId;
   final double latitude;
   final double longitude;
   final String plantedBy;
@@ -14,6 +15,7 @@ class TreeMarkerModel {
   TreeMarkerModel({
     required this.id,
     required this.treeName,
+    required this.userId,
     required this.latitude,
     required this.longitude,
     required this.plantedBy,
@@ -36,8 +38,9 @@ class TreeMarkerModel {
     return TreeMarkerModel(
       id: doc.id,
       treeName: data['speciesName'] as String? ?? data['treeName'] as String? ?? 'Unknown Tree',
-      latitude: (data['latitude'] as num?)?.toDouble() ?? 18.5204,
-      longitude: (data['longitude'] as num?)?.toDouble() ?? 73.8567,
+      userId: data['userId'] as String? ?? '',
+      latitude: (data['latitude'] as num?)?.toDouble() ?? 20.7002,
+      longitude: (data['longitude'] as num?)?.toDouble() ?? 77.0082,
       plantedBy: data['userName'] as String? ?? data['plantedBy'] as String? ?? 'Green Guardian',
       plantedDate: pDate,
       imageUrl: data['imageUrl'] as String? ?? '',

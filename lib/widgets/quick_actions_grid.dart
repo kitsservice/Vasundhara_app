@@ -2,23 +2,25 @@ import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_animate/flutter_animate.dart';
-import 'package:provider/provider.dart';
+import 'package:latlong2/latlong.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
-import '../providers/settings_provider.dart';
+import 'package:easy_localization/easy_localization.dart';
 import '../theme/app_colors.dart';
-import '../screens/ola_map_screen.dart';
-import '../screens/gamification/my_forest_screen.dart';
+import '../screens/gamification/my_progress_screen.dart';
 import '../screens/gamification/user_trees_list_screen.dart';
 import '../widgets/pledge_dialog.dart';
 import '../screens/core/donate_screen.dart';
+import '../screens/gamification/communities_list_screen.dart';
+import '../screens/map/location_picker_screen.dart';
+import '../services/firestore_marker_service.dart';
 
 class QuickActionsGrid extends StatelessWidget {
   const QuickActionsGrid({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final isMarathi = context.watch<SettingsProvider>().isMarathi;
-
     return Column(
       children: [
         Row(
@@ -26,7 +28,7 @@ class QuickActionsGrid extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.end,
           children: [
             Text(
-              isMarathi ? 'त्वरित क्रिया' : 'Quick Actions',
+              tr('ui_key_175'),
               style: GoogleFonts.outfit(
                 fontSize: 18,
                 fontWeight: FontWeight.w900,
@@ -43,20 +45,24 @@ class QuickActionsGrid extends StatelessWidget {
             Expanded(
               child: SquareActionCard(
                 icon: CupertinoIcons.location_solid,
-                title: isMarathi ? 'ठिकाण जोडा' : 'Add Location',
+                title: tr('ui_key_176'),
                 iconColor: const Color(0xFF047857),
                 iconBackgroundColor: const Color(0xFFBBEBDB),
                 backgroundGradient: const [
                   Color(0xFFECFDF7),
                   Color(0xFFD1F2E6),
                 ],
-                onTap: () {
-                  Navigator.push(
+                onTap: () async {
+                  final result = await Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (_) => const OlaMapScreen(),
+                      builder: (_) => const LocationPickerScreen(),
                     ),
                   );
+
+                  if (result != null && result is LatLng && context.mounted) {
+                    _showSuggestSiteDialog(context, result);
+                  }
                 },
               ),
             ),
@@ -64,7 +70,7 @@ class QuickActionsGrid extends StatelessWidget {
             Expanded(
               child: SquareActionCard(
                 icon: CupertinoIcons.camera_fill,
-                title: isMarathi ? 'फोटो अपलोड' : 'Upload Photo',
+                title: tr('ui_key_177'),
                 iconColor: const Color(0xFF065F46),
                 iconBackgroundColor: const Color(0xFFBADCD3),
                 backgroundGradient: const [
@@ -89,7 +95,7 @@ class QuickActionsGrid extends StatelessWidget {
             Expanded(
               child: SquareActionCard(
                 icon: Icons.handshake,
-                title: isMarathi ? 'शपथ घ्या' : 'Take Pledge',
+                title: tr('ui_key_178'),
                 iconColor: const Color(0xFF022C22),
                 iconBackgroundColor: const Color(0xFFB2CFC5),
                 backgroundGradient: const [
@@ -108,7 +114,7 @@ class QuickActionsGrid extends StatelessWidget {
             Expanded(
               child: SquareActionCard(
                 icon: Icons.bar_chart_rounded,
-                title: isMarathi ? 'माझी प्रगती' : 'My Progress',
+                title: tr('ui_key_179'),
                 iconColor: const Color(0xFF4B5563),
                 iconBackgroundColor: const Color(0xFFD4D8DD),
                 backgroundGradient: const [
@@ -119,7 +125,7 @@ class QuickActionsGrid extends StatelessWidget {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (_) => const MyForestScreen(),
+                      builder: (_) => const MyProgressScreen(),
                     ),
                   );
                 },
@@ -133,7 +139,7 @@ class QuickActionsGrid extends StatelessWidget {
             Expanded(
               child: SquareActionCard(
                 icon: CupertinoIcons.heart_solid,
-                title: isMarathi ? 'दान करा' : 'Donate',
+                title: tr('ui_key_180'),
                 iconColor: const Color(0xFFBE123C),
                 iconBackgroundColor: const Color(0xFFFECDD3),
                 backgroundGradient: const [
@@ -151,10 +157,84 @@ class QuickActionsGrid extends StatelessWidget {
               ),
             ),
             const SizedBox(width: 16),
-            const Expanded(child: SizedBox()),
+            Expanded(
+              child: SquareActionCard(
+                icon: CupertinoIcons.person_3_fill,
+                title: tr('ui_key_234'),
+                iconColor: const Color(0xFF1D4ED8),
+                iconBackgroundColor: const Color(0xFFDBEAFE),
+                backgroundGradient: const [
+                  Color(0xFFEFF6FF),
+                  Color(0xFFBFDBFE),
+                ],
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => const CommunitiesListScreen(),
+                    ),
+                  );
+                },
+              ),
+            ),
           ],
         ).animate().fade(delay: 700.ms).slideY(begin: 0.1),
       ],
+    );
+  }
+
+  void _showSuggestSiteDialog(BuildContext context, LatLng location) {
+    final TextEditingController descController = TextEditingController();
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Suggest Planting Site'),
+        content: TextField(
+          controller: descController,
+          decoration: const InputDecoration(
+            hintText: 'Enter a brief description (e.g., Empty field in park)',
+          ),
+          maxLines: 3,
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              if (descController.text.trim().isEmpty) return;
+              final user = FirebaseAuth.instance.currentUser;
+              if (user != null) {
+                await FirestoreMarkerService().addSuggestedSite({
+                  'latitude': location.latitude,
+                  'longitude': location.longitude,
+                  'description': descController.text.trim(),
+                  'userId': user.uid,
+                  'timestamp': DateTime.now(),
+                });
+
+                // Notify Admin
+                await FirebaseFirestore.instance.collection('admin_notifications').add({
+                  'title': 'New Site Suggested',
+                  'message': '${user.displayName ?? 'A user'} suggested a new planting site.',
+                  'type': 'site_suggested',
+                  'userName': user.displayName ?? 'Unknown',
+                  'isRead': false,
+                  'createdAt': FieldValue.serverTimestamp(),
+                });
+              }
+              if (ctx.mounted) {
+                Navigator.pop(ctx);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Suggested site submitted successfully!')),
+                );
+              }
+            },
+            child: const Text('Submit'),
+          ),
+        ],
+      ),
     );
   }
 }

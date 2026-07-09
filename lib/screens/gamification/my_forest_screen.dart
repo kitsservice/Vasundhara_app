@@ -3,8 +3,8 @@ import 'package:flutter/cupertino.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import '../../providers/user_provider.dart';
-import '../../theme/app_colors.dart';
 import '../core/plant_tree_screen.dart';
+import '../map/map_screen.dart';
 
 class MyForestScreen extends StatelessWidget {
   const MyForestScreen({super.key});
@@ -69,57 +69,34 @@ class MyForestScreen extends StatelessWidget {
                       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                       children: [
                         _buildStatItem(Icons.energy_savings_leaf, totalPlanted.toString(), 'Total Trees\nPlanted'),
+                        Container(width: 1, height: 40, color: Colors.white24),
+                        _buildStatItem(CupertinoIcons.cloud, '${(totalPlanted * 21.7).toStringAsFixed(1)} kg', 'CO2\nAbsorbed'),
                       ],
                     ),
                   ),
                   const SizedBox(height: 28),
                   
                   // My Trees Header
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      const Text(
-                        'My Trees',
-                        style: TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
-                          color: Color(0xFF0A4D2E),
+                  SizedBox(
+                    height: 38,
+                    child: TextField(
+                      decoration: InputDecoration(
+                        hintText: 'Search...',
+                        hintStyle: const TextStyle(fontSize: 13, color: Colors.grey),
+                        prefixIcon: const Icon(CupertinoIcons.search, size: 18, color: Color(0xFF0A4D2E)),
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 12),
+                        filled: true,
+                        fillColor: Colors.white,
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(10),
+                          borderSide: BorderSide(color: Colors.grey.shade300, width: 1),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(10),
+                          borderSide: const BorderSide(color: Color(0xFF0A4D2E), width: 1.2),
                         ),
                       ),
-                      Row(
-                        children: [
-                          Container(
-                            decoration: BoxDecoration(
-                              border: Border.all(color: Colors.grey.shade300),
-                              borderRadius: BorderRadius.circular(8),
-                              color: Colors.white,
-                            ),
-                            child: IconButton(
-                              icon: const Icon(CupertinoIcons.search, size: 20, color: Color(0xFF0A4D2E)),
-                              onPressed: () {},
-                              constraints: const BoxConstraints(),
-                              padding: const EdgeInsets.all(8),
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          Container(
-                            decoration: BoxDecoration(
-                              border: Border.all(color: Colors.grey.shade300),
-                              borderRadius: BorderRadius.circular(8),
-                              color: Colors.white,
-                            ),
-                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                            child: Row(
-                              children: const [
-                                Icon(Icons.filter_list, size: 20, color: Color(0xFF0A4D2E)),
-                                SizedBox(width: 4),
-                                Text('Filter', style: TextStyle(fontWeight: FontWeight.w500, color: Color(0xFF0A4D2E))),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
+                    ),
                   ),
                   const SizedBox(height: 16),
                   
@@ -133,7 +110,7 @@ class MyForestScreen extends StatelessWidget {
                       itemCount: trees.length,
                       separatorBuilder: (context, index) => const SizedBox(height: 12),
                       itemBuilder: (context, index) {
-                        return _buildTreeCard(trees[index]);
+                        return _buildTreeCard(context, trees[index]);
                       },
                     ),
                   
@@ -159,13 +136,6 @@ class MyForestScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildDivider() {
-    return Container(
-      height: 50,
-      width: 1,
-      color: Colors.white.withValues(alpha: 0.3),
-    );
-  }
 
   Widget _buildStatItem(IconData icon, String value, String label) {
     return Expanded(
@@ -203,10 +173,24 @@ class MyForestScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildTreeCard(PlantedTree tree) {
+
+
+  Widget _buildTreeCard(BuildContext context, PlantedTree tree) {
     final dateFormat = DateFormat('dd MMM yyyy');
     
-    return Container(
+    return GestureDetector(
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => MapScreen(
+              initialLat: tree.latitude,
+              initialLng: tree.longitude,
+            ),
+          ),
+        );
+      },
+      child: Container(
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(12),
@@ -223,9 +207,17 @@ class MyForestScreen extends StatelessWidget {
               child: SizedBox(
                 width: 90,
                 height: 90,
-                child: tree.imageUrl != null && tree.imageUrl!.isNotEmpty
-                    ? Image.network(tree.imageUrl!, fit: BoxFit.cover)
-                    : Image.asset('assets/images/realistic_plant.png', fit: BoxFit.cover),
+                child: () {
+                  final String? displayUrl = (tree.imageUrl != null && tree.imageUrl!.isNotEmpty)
+                      ? tree.imageUrl
+                      : (tree.imageUrls != null && tree.imageUrls!.isNotEmpty ? tree.imageUrls!.first : null);
+                  
+                  if (displayUrl != null && displayUrl.isNotEmpty) {
+                    return Image.network(displayUrl, fit: BoxFit.cover);
+                  } else {
+                    return Image.asset('assets/images/realistic_plant.png', fit: BoxFit.cover);
+                  }
+                }(),
               ),
             ),
             const SizedBox(width: 16),
@@ -251,9 +243,9 @@ class MyForestScreen extends StatelessWidget {
                           color: const Color(0xFFE8F5E9),
                           borderRadius: BorderRadius.circular(12),
                         ),
-                        child: Row(
+                        child: const Row(
                           mainAxisSize: MainAxisSize.min,
-                          children: const [
+                          children: [
                             Icon(Icons.check_circle, color: Color(0xFF4CAF50), size: 14),
                             SizedBox(width: 4),
                             Text(
@@ -280,7 +272,7 @@ class MyForestScreen extends StatelessWidget {
           ],
         ),
       ),
-    );
+    ),);
   }
 
   Widget _buildIconTextRow(IconData icon, String text) {

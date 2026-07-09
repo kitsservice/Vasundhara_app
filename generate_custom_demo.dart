@@ -1,3 +1,4 @@
+// ignore_for_file: avoid_print
 import 'dart:io';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
@@ -295,6 +296,5 @@ void main() async {
 
   final file = File('d:\\Vasundhara_app\\Sarthak_Joshi_Certificate.pdf');
   await file.writeAsBytes(await pdf.save());
-  // ignore: avoid_print
   print('Saved custom demo to ${file.path}');
 }

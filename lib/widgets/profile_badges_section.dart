@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:provider/provider.dart';
 import '../providers/user_provider.dart';
-import '../providers/settings_provider.dart';
 import '../theme/app_colors.dart';
 
 class ProfileBadgesSection extends StatelessWidget {
@@ -10,7 +10,6 @@ class ProfileBadgesSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isMarathi = context.watch<SettingsProvider>().isMarathi;
     final hasPhilanthropist = context.select<UserProvider, bool>(
       (provider) => provider.unlockedBadges.contains('green_philanthropist'),
     );
@@ -21,7 +20,7 @@ class ProfileBadgesSection extends StatelessWidget {
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 8.0),
           child: Text(
-            isMarathi ? 'माझे बॅज' : 'My Badges',
+            'ui_key_172'.tr(),
             style: const TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.bold,
@@ -98,12 +97,8 @@ class ProfileBadgesSection extends StatelessWidget {
                     const SizedBox(height: 4),
                     Text(
                       hasPhilanthropist
-                          ? (isMarathi
-                              ? 'देणगीसाठी विशेष धन्यवाद!'
-                              : 'Unlocked by making a physical donation!')
-                          : (isMarathi
-                              ? 'देणगी देऊन अनलॉक करा'
-                              : 'Donate to unlock this exclusive badge.'),
+                          ? ('ui_key_173'.tr())
+                          : ('ui_key_174'.tr()),
                       style: TextStyle(
                         fontSize: 13,
                         color:

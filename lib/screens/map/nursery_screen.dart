@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../providers/settings_provider.dart';
-import 'package:provider/provider.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:geolocator/geolocator.dart';
@@ -81,23 +80,30 @@ class _NurseryScreenState extends State<NurseryScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final isMarathi = context.watch<SettingsProvider>().isMarathi;
-
+    final isMarathi = context.locale.languageCode == 'mr';
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
-        title: Text(isMarathi ? 'जवळपासच्या रोपवाटिका' : 'Nearby Nurseries'),
+        title: Text('ui_key_85'.tr()),
         backgroundColor: Colors.white,
         elevation: 0,
         actions: [
           TextButton(
             onPressed: () {
               setState(() {
-                context.read<SettingsProvider>().toggleLanguage();
+                final code = context.locale.languageCode;
+if (code == 'en') {
+  context.setLocale(const Locale('mr'));
+} else if (code == 'mr') {
+  context.setLocale(const Locale('hi'));
+} else {
+  context.setLocale(const Locale('en'));
+}
+
               });
             },
             child: Text(
-              isMarathi ? 'EN' : 'MR',
+              'ui_key_86'.tr(),
               style: const TextStyle(
                 fontWeight: FontWeight.bold,
                 color: AppColors.primary,
@@ -125,9 +131,7 @@ class _NurseryScreenState extends State<NurseryScreen> {
                         ),
                         const SizedBox(height: 16),
                         Text(
-                          isMarathi
-                              ? 'अंतर मोजण्यासाठी स्थान प्रवेश आवश्यक आहे.'
-                              : 'Location access is required to calculate distances.',
+                          'ui_key_87'.tr(),
                           textAlign: TextAlign.center,
                           style: const TextStyle(
                             color: AppColors.textSecondary,
@@ -144,7 +148,7 @@ class _NurseryScreenState extends State<NurseryScreen> {
                             _fetchUserLocation();
                           },
                           child: Text(
-                            isMarathi ? 'पुन्हा प्रयत्न करा' : 'Try Again',
+                            'ui_key_88'.tr(),
                           ),
                         ),
                       ],
@@ -166,9 +170,7 @@ class _NurseryScreenState extends State<NurseryScreen> {
                     if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
                       return Center(
                         child: Text(
-                          isMarathi
-                              ? 'रोपवाटिका उपलब्ध नाहीत'
-                              : 'No nurseries available',
+                          'ui_key_89'.tr(),
                           style:
                               const TextStyle(color: AppColors.textSecondary),
                         ),
@@ -255,9 +257,7 @@ class _NurseryScreenState extends State<NurseryScreen> {
                               ScaffoldMessenger.of(context).showSnackBar(
                                 SnackBar(
                                   content: Text(
-                                    isMarathi
-                                        ? 'नर्सरीचा संपर्क क्रमांक उपलब्ध नाही.'
-                                        : 'Contact number not available for this nursery.',
+                                    'ui_key_90'.tr(),
                                   ),
                                 ),
                               );
@@ -271,9 +271,7 @@ class _NurseryScreenState extends State<NurseryScreen> {
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   SnackBar(
                                     content: Text(
-                                      isMarathi
-                                          ? 'कॉल करता आला नाही.'
-                                          : 'Could not launch the phone dialer.',
+                                      'ui_key_91'.tr(),
                                     ),
                                   ),
                                 );

@@ -5,14 +5,15 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../theme/app_colors.dart';
 import '../../providers/user_provider.dart';
-import '../../providers/settings_provider.dart';
 import '../../widgets/professional_drawer.dart';
 import '../../widgets/home_hero_background.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 import 'notifications_screen.dart';
 import 'dart:ui';
+import 'package:easy_localization/easy_localization.dart';
 import '../../widgets/abhiyan_banner.dart';
 import '../../widgets/quick_actions_grid.dart';
 
@@ -38,10 +39,19 @@ class _HomeScreenState extends State<HomeScreen> {
       if (snapshot.docs.isNotEmpty) {
         final doc = snapshot.docs.first;
         final docId = doc.id;
+        final data = doc.data();
+
+        final user = FirebaseAuth.instance.currentUser;
+        if (user != null && user.metadata.creationTime != null && data['createdAt'] != null) {
+          final createdAt = (data['createdAt'] as Timestamp).toDate();
+          if (createdAt.isBefore(user.metadata.creationTime!)) {
+            await prefs.setString('last_seen_announcement_id', docId);
+            return;
+          }
+        }
 
         if (lastSeenId != docId) {
           if (mounted) {
-            final data = doc.data();
             showDialog(
               context: context,
               barrierDismissible: false,
@@ -175,7 +185,12 @@ class _HomeScreenState extends State<HomeScreen> {
                 icon: const Icon(CupertinoIcons.globe),
                 tooltip: 'Toggle Language',
                 onPressed: () {
-                  context.read<SettingsProvider>().toggleLanguage();
+                  final current = context.locale.languageCode;
+                  if (current == 'en') {
+                    context.setLocale(const Locale('mr'));
+                  } else {
+                    context.setLocale(const Locale('en'));
+                  }
                 },
               ),
               Consumer<UserProvider>(

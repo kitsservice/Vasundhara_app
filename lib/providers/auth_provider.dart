@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
@@ -44,8 +45,12 @@ class AuthProvider extends ChangeNotifier {
   Future<bool> signUpWithEmail(
     String name,
     String email,
-    String password,
-  ) async {
+    String password, {
+    String role = 'Individual',
+    String? communityName,
+    String? communityAddress,
+    String? contactPhone,
+  }) async {
     _setLoading(true);
     _setError(null);
     try {
@@ -55,6 +60,18 @@ class AuthProvider extends ChangeNotifier {
         password: password,
       );
       await credential.user?.updateDisplayName(name);
+      
+      // Save user metadata to Firestore
+      await FirebaseFirestore.instance.collection('users').doc(credential.user!.uid).set({
+        'name': name,
+        'email': email,
+        'role': role,
+        if (communityName != null && communityName.isNotEmpty) 'communityName': communityName,
+        if (communityAddress != null && communityAddress.isNotEmpty) 'communityAddress': communityAddress,
+        if (contactPhone != null && contactPhone.isNotEmpty) 'contactPhone': contactPhone,
+        'createdAt': FieldValue.serverTimestamp(),
+      }, SetOptions(merge: true),);
+      
       _setLoading(false);
       return true;
     } on FirebaseAuthException catch (e) {

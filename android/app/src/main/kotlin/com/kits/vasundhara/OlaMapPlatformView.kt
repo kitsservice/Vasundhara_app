@@ -82,7 +82,11 @@ class OlaMapPlatformView(
                 }
 
                 try {
-                    val iconRes = if (type == "nursery") R.drawable.ic_nursery_logo else R.drawable.ic_tree_logo
+                    val iconRes = when (type) {
+                        "nursery" -> R.drawable.ic_nursery_logo
+                        "suggested" -> R.drawable.ic_suggested_site
+                        else -> R.drawable.ic_tree_logo
+                    }
                     
                     val bitmap = getBitmapFromVectorDrawable(context, iconRes)
                     
@@ -98,6 +102,25 @@ class OlaMapPlatformView(
                 } catch (e: Exception) {
                     Log.e(TAG, "Failed to add marker", e)
                     result.error("MARKER_ERROR", e.message, null)
+                }
+            }
+            "moveToLocation" -> {
+                val lat = call.argument<Double>("lat") ?: return
+                val lng = call.argument<Double>("lng") ?: return
+                val zoom = call.argument<Double>("zoom") ?: 15.0
+                
+                if (olaMap == null) {
+                    result.error("MAP_NOT_READY", "Map is not initialized yet.", null)
+                    return
+                }
+
+                try {
+                    val latLng = com.ola.mapsdk.model.OlaLatLng(lat, lng)
+                    olaMap?.moveCameraToLatLong(latLng, zoom, 1000)
+                    result.success(null)
+                } catch (e: Exception) {
+                    Log.e(TAG, "Failed to move camera", e)
+                    result.error("MOVE_ERROR", e.message, null)
                 }
             }
             else -> result.notImplemented()

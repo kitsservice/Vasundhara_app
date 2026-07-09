@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'theme/app_theme.dart';
 import 'screens/auth/splash_screen.dart';
 import 'providers/user_provider.dart';
@@ -25,7 +26,16 @@ void main() async {
     debugPrint('NotificationService init failed: $e');
   }
 
-  runApp(const VasundharaApp());
+  await EasyLocalization.ensureInitialized();
+
+  runApp(
+    EasyLocalization(
+      supportedLocales: const [Locale('en'), Locale('mr'), Locale('hi')],
+      path: 'assets/translations',
+      fallbackLocale: const Locale('en'),
+      child: const VasundharaApp(),
+    ),
+  );
 }
 
 class VasundharaApp extends StatelessWidget {
@@ -41,6 +51,9 @@ class VasundharaApp extends StatelessWidget {
       ],
       child: MaterialApp(
         title: 'Vasundhara',
+        localizationsDelegates: context.localizationDelegates,
+        supportedLocales: context.supportedLocales,
+        locale: context.locale,
         debugShowCheckedModeBanner: false,
         theme: AppTheme.lightTheme,
         home: const SplashScreen(),

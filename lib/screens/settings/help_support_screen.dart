@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
-import '../../providers/settings_provider.dart';
 import '../../theme/app_colors.dart';
 
 class HelpSupportScreen extends StatelessWidget {
@@ -26,8 +25,6 @@ class HelpSupportScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isMarathi = context.watch<SettingsProvider>().isMarathi;
-
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
@@ -39,7 +36,7 @@ class HelpSupportScreen extends StatelessWidget {
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(
-          isMarathi ? 'मदत आणि समर्थन' : 'Help & Support',
+          'ui_key_106'.tr(),
           style: GoogleFonts.outfit(
             color: AppColors.textPrimary,
             fontSize: 22,
@@ -76,7 +73,7 @@ class HelpSupportScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 16),
                   Text(
-                    isMarathi ? 'आम्हाला संपर्क करा' : 'Contact Us',
+                    'ui_key_107'.tr(),
                     style: GoogleFonts.outfit(
                       fontSize: 20,
                       fontWeight: FontWeight.bold,
@@ -102,7 +99,7 @@ class HelpSupportScreen extends StatelessWidget {
                         size: 20,
                       ),
                       label: Text(
-                        isMarathi ? 'बग नोंदवा' : 'Report an Issue',
+                        'ui_key_108'.tr(),
                         style: const TextStyle(
                           color: Colors.white,
                           fontWeight: FontWeight.bold,
@@ -122,9 +119,7 @@ class HelpSupportScreen extends StatelessWidget {
             ),
             const SizedBox(height: 32),
             Text(
-              isMarathi
-                  ? 'सतत विचारले जाणारे प्रश्न (FAQ)'
-                  : 'Frequently Asked Questions',
+              'ui_key_109'.tr(),
               style: GoogleFonts.outfit(
                 fontSize: 20,
                 fontWeight: FontWeight.bold,
@@ -133,36 +128,24 @@ class HelpSupportScreen extends StatelessWidget {
             ),
             const SizedBox(height: 16),
             _FaqTile(
-              question: isMarathi
-                  ? 'मी ॲप वापरून झाड कसे लावू शकतो?'
-                  : 'How do I log a planted tree?',
-              answer: isMarathi
-                  ? 'नकाशावर किंवा कँपेन हबवर "Plant for Abhiyan" बटणावर क्लिक करा. तुमचे GPS चालू असल्याची खात्री करा आणि तुमच्या झाडाचा फोटो अपलोड करा.'
-                  : 'Click the "Plant for Abhiyan" Floating Action Button on the map or campaign hub. Ensure GPS is on, and upload a photo.',
+              question: 'ui_key_110'.tr(),
+              answer: 'ui_key_111'.tr(),
             ),
             _FaqTile(
-              question: isMarathi
-                  ? 'ॲप माझे स्थान का घेत नाही?'
-                  : 'Why isn\'t the app fetching my location?',
-              answer: isMarathi
-                  ? 'तुमच्या फोनचे GPS चालू असल्याची खात्री करा आणि तुम्ही तुमच्या फोन सेटिंग्जमध्ये ॲपला स्थान (Location) परवानग्या दिल्या आहेत.'
-                  : 'Ensure your phone\'s GPS is turned on and you have granted the app Location permissions in your phone settings.',
+              question: 'ui_key_112'.tr(),
+              answer: 'ui_key_113'.tr(),
             ),
             _FaqTile(
-              question: isMarathi
-                  ? '६ महिन्यांचे अद्यतन काय आहे?'
-                  : 'What is the 6-Month Growth Update?',
-              answer: isMarathi
-                  ? 'झाडांचे अस्तित्व सुनिश्चित करण्यासाठी, आम्ही वापरकर्त्यांना लागवडीच्या ६ महिन्यांनंतर त्यांच्या झाडाचा दुसरा फोटो अपलोड करण्यास सांगतो.'
-                  : 'To ensure the survival of trees, we ask users to upload a second photo of their tree 6 months after planting.',
+              question: 'ui_key_114'.tr(),
+              answer: 'ui_key_115'.tr(),
             ),
             _FaqTile(
-              question: isMarathi
-                  ? 'मी ग्रीन गार्डियन्स लीडरबोर्डवर कसा येऊ शकेन?'
-                  : 'How do I get on the Green Guardians Leaderboard?',
-              answer: isMarathi
-                  ? 'अधिक झाडे लावा! लीडरबोर्ड जागतिक स्तरावर शीर्ष योगदानकर्त्यांचा मागोवा घेतो.'
-                  : 'Plant more trees! The leaderboard tracks the top contributors globally.',
+              question: 'ui_key_116'.tr(),
+              answer: 'ui_key_117'.tr(),
+            ),
+            _FaqTile(
+              question: 'ui_key_118'.tr(),
+              answer: 'ui_key_119'.tr(),
             ),
           ],
         ),

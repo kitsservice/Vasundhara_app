@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/cupertino.dart';
-import 'package:provider/provider.dart';
 import 'package:flutter_animate/flutter_animate.dart';
-import '../providers/settings_provider.dart';
 import '../theme/app_colors.dart';
 import '../screens/core/campaign_hub_screen.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -29,8 +28,6 @@ class _AbhiyanBannerWidgetState extends State<AbhiyanBannerWidget> {
 
   @override
   Widget build(BuildContext context) {
-    final isMarathi = context.watch<SettingsProvider>().isMarathi;
-
     return StreamBuilder<DocumentSnapshot>(
       stream: _campaignStream,
       builder: (context, snapshot) {
@@ -54,12 +51,8 @@ class _AbhiyanBannerWidgetState extends State<AbhiyanBannerWidget> {
         if (programType == 'Facilitation Program') {
           displayTitle = customTitle.isNotEmpty
               ? customTitle
-              : (isMarathi
-                  ? 'सुविधा कार्यक्रमात सामील व्हा'
-                  : 'Join the Facilitation Program');
-          displaySubtitle = isMarathi
-              ? 'समाजाला सशक्त करा आणि एकत्र वाढा!'
-              : 'Empower the community and grow together!';
+              : ('ui_key_132'.tr());
+          displaySubtitle = 'ui_key_133'.tr();
           gradientColors = [Colors.blue.shade800, Colors.blue.shade500];
           graphic = const Icon(
             CupertinoIcons.group_solid,
@@ -69,12 +62,8 @@ class _AbhiyanBannerWidgetState extends State<AbhiyanBannerWidget> {
         } else if (programType == 'Awareness Drive') {
           displayTitle = customTitle.isNotEmpty
               ? customTitle
-              : (isMarathi
-                  ? 'जागरूकता मोहिमेत सामील व्हा'
-                  : 'Join the Awareness Drive');
-          displaySubtitle = isMarathi
-              ? 'पर्यावरणाबद्दल जागरूकता निर्माण करा!'
-              : 'Spread awareness about our environment!';
+              : ('ui_key_134'.tr());
+          displaySubtitle = 'ui_key_135'.tr();
           gradientColors = [Colors.orange.shade800, Colors.orange.shade500];
           graphic = const Icon(
             CupertinoIcons.speaker_3_fill,
@@ -84,12 +73,8 @@ class _AbhiyanBannerWidgetState extends State<AbhiyanBannerWidget> {
         } else {
           displayTitle = customTitle.isNotEmpty
               ? customTitle
-              : (isMarathi
-                  ? 'हरित वसुंधरा अभियानात सामील व्हा'
-                  : 'Join the Green Vasundhara Abhiyan');
-          displaySubtitle = isMarathi
-              ? 'हवामान बदलाशी लढा, प्रमाणपत्रे मिळवा आणि लीडरबोर्डवर चढा!'
-              : 'Combat climate change, earn official certificates, and climb the leaderboard!';
+              : ('ui_key_136'.tr());
+          displaySubtitle = 'ui_key_137'.tr();
         }
 
         return Container(
@@ -158,7 +143,7 @@ class _AbhiyanBannerWidgetState extends State<AbhiyanBannerWidget> {
                         minimumSize: const Size(120, 40),
                       ),
                       child: Text(
-                        isMarathi ? 'अधिक जाणून घ्या' : 'Know More',
+                        'ui_key_138'.tr(),
                         style: GoogleFonts.inter(
                           fontSize: 13,
                           fontWeight: FontWeight.w800,

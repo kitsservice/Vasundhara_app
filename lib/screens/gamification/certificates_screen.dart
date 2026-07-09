@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../../providers/user_provider.dart';
-import '../../providers/settings_provider.dart';
 import '../../services/certificate_service.dart';
 import '../../theme/app_colors.dart';
 
@@ -13,7 +13,6 @@ class CertificatesScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isMarathi = context.watch<SettingsProvider>().isMarathi;
     final treesPlanted = context.select<UserProvider, int>(
       (provider) => provider.totalTreesPlanted,
     );
@@ -25,23 +24,17 @@ class CertificatesScreen extends StatelessWidget {
       {
         'title': '🌱 Seedling',
         'requirement': 1,
-        'description': isMarathi
-            ? 'पहिले झाड लावले'
-            : 'Awarded for planting your very first tree.',
+        'description': 'ui_key_53'.tr(),
       },
       {
         'title': '🌿 Green Guardian',
         'requirement': 11,
-        'description': isMarathi
-            ? '११ झाडे लावली'
-            : 'Awarded for reaching the milestone of 11 trees.',
+        'description': 'ui_key_54'.tr(),
       },
       {
         'title': '🌳 Forest Master',
         'requirement': 50,
-        'description': isMarathi
-            ? '५० झाडे लावली'
-            : 'Awarded for an extraordinary contribution of 50 trees.',
+        'description': 'ui_key_55'.tr(),
       },
     ];
 
@@ -49,7 +42,7 @@ class CertificatesScreen extends StatelessWidget {
       backgroundColor: Colors.grey.shade50,
       appBar: AppBar(
         title: Text(
-          isMarathi ? 'माझी प्रमाणपत्रे' : 'My Certificates',
+          'ui_key_56'.tr(),
           style: GoogleFonts.outfit(
             fontWeight: FontWeight.bold,
             color: AppColors.textPrimary,
@@ -178,9 +171,7 @@ class CertificatesScreen extends StatelessWidget {
                           color: Colors.white,
                         ),
                         label: Text(
-                          isMarathi
-                              ? 'प्रमाणपत्र डाउनलोड करा'
-                              : 'Download Certificate',
+                          'ui_key_57'.tr(),
                           style: GoogleFonts.inter(
                             fontWeight: FontWeight.bold,
                             color: Colors.white,
@@ -207,9 +198,9 @@ class CertificatesScreen extends StatelessWidget {
                           ),
                         ),
                         child: Text(
-                          isMarathi
-                              ? '${requirement - treesPlanted} आणखी झाडे आवश्यक आहेत'
-                              : 'Plant ${requirement - treesPlanted} more trees to unlock',
+                          'ui_key_58'.tr(namedArgs: {
+                            'remaining': (requirement - treesPlanted).toString(),
+                          },),
                           style: GoogleFonts.inter(
                             fontWeight: FontWeight.bold,
                             color: Colors.grey.shade500,

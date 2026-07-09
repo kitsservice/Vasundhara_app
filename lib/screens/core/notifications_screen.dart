@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:timeago/timeago.dart' as timeago;
-import '../../providers/settings_provider.dart';
 import '../../providers/user_provider.dart';
 import '../../theme/app_colors.dart';
 
@@ -26,7 +26,6 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final isMarathi = context.watch<SettingsProvider>().isMarathi;
     final notifications =
         context.select<UserProvider, dynamic>((p) => p.notifications);
 
@@ -41,7 +40,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(
-          isMarathi ? 'अधिसूचना' : 'Notifications',
+          'ui_key_46'.tr(),
           style: GoogleFonts.outfit(
             color: AppColors.textPrimary,
             fontSize: 22,
@@ -57,21 +56,17 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                   context: context,
                   builder: (context) => AlertDialog(
                     title: Text(
-                      isMarathi
-                          ? 'सर्व अधिसूचना साफ करा'
-                          : 'Clear All Notifications',
+                      'ui_key_47'.tr(),
                       style: GoogleFonts.outfit(fontWeight: FontWeight.bold),
                     ),
                     content: Text(
-                      isMarathi
-                          ? 'तुम्हाला नक्की सर्व अधिसूचना साफ करायच्या आहेत का?'
-                          : 'Are you sure you want to clear all notifications?',
+                      'ui_key_48'.tr(),
                     ),
                     actions: [
                       TextButton(
                         onPressed: () => Navigator.pop(context),
                         child: Text(
-                          isMarathi ? 'रद्द करा' : 'Cancel',
+                          'ui_key_49'.tr(),
                           style: const TextStyle(color: Colors.grey),
                         ),
                       ),
@@ -84,7 +79,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                           backgroundColor: Colors.redAccent,
                         ),
                         child: Text(
-                          isMarathi ? 'साफ करा' : 'Clear',
+                          'ui_key_50'.tr(),
                           style: const TextStyle(color: Colors.white),
                         ),
                       ),
@@ -107,9 +102,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                   ).animate().scale(delay: 200.ms),
                   const SizedBox(height: 16),
                   Text(
-                    isMarathi
-                        ? 'कोणत्याही नवीन सूचना नाहीत'
-                        : 'No new notifications',
+                    'ui_key_51'.tr(),
                     style: GoogleFonts.inter(
                       fontSize: 18,
                       color: AppColors.textSecondary,

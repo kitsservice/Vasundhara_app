@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_animate/flutter_animate.dart';
@@ -15,7 +16,7 @@ class MissionSection extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          isMarathi ? 'आमचे ध्येय' : 'Our Mission',
+          'ui_key_139'.tr(),
           style: GoogleFonts.outfit(
             fontSize: 22,
             fontWeight: FontWeight.bold,
@@ -24,9 +25,7 @@ class MissionSection extends StatelessWidget {
         ).animate().fadeIn(duration: 500.ms).slideX(),
         const SizedBox(height: 10),
         Text(
-          isMarathi
-              ? 'हरित वसुंधरा अभियान हा आपल्या शहराला पुन्हा हिरवेगार बनवण्याचा एक उपक्रम आहे. एक झाड लावून हवामान बदलाशी लढण्यासाठी आमच्यात सामील व्हा.'
-              : 'The Green Vasundhara Abhiyan is a community-driven initiative to restore our urban canopy. Join us in fighting climate change, one tree at a time.',
+          'ui_key_140'.tr(),
           style: GoogleFonts.inter(
             fontSize: 15,
             color: AppColors.textSecondary,
@@ -49,7 +48,7 @@ class WhyJoinSection extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          isMarathi ? 'वसुंधरामध्ये का सामील व्हावे?' : 'Why Join Vasundhara?',
+          'ui_key_141'.tr(),
           style: GoogleFonts.outfit(
             fontSize: 18,
             fontWeight: FontWeight.bold,
@@ -59,35 +58,23 @@ class WhyJoinSection extends StatelessWidget {
         const SizedBox(height: 12),
         _BenefitItem(
           title:
-              isMarathi ? '🌍 हवामान बदलाशी लढा' : '🌍 Combat Climate Change',
-          description: isMarathi
-              ? 'प्रत्येक झाड कार्बन डायऑक्साइड शोषून घेते आणि आपली हवा शुद्ध करते.'
-              : 'Every tree absorbs CO2 and purifies our air.',
+              'ui_key_142'.tr(),
+          description: 'ui_key_143'.tr(),
           delayMs: 350,
         ),
         _BenefitItem(
-          title: isMarathi
-              ? '📜 अधिकृत प्रमाणपत्रे मिळवा'
-              : '📜 Earn Official Certificates',
-          description: isMarathi
-              ? 'तुमच्या योगदानासाठी आणि झाडांच्या वाढीसाठी प्रमाणपत्रे मिळवा.'
-              : 'Get recognized for your planting and 6-month growth tracking.',
+          title: 'ui_key_144'.tr(),
+          description: 'ui_key_145'.tr(),
           delayMs: 400,
         ),
         _BenefitItem(
-          title: isMarathi ? '🏆 लीडरबोर्डवर चढा' : '🏆 Climb the Leaderboard',
-          description: isMarathi
-              ? 'समाजातील इतर लोकांशी स्पर्धा करा आणि निसर्गाचे रक्षक बना.'
-              : 'Compete with the community and become a top Green Guardian.',
+          title: 'ui_key_146'.tr(),
+          description: 'ui_key_147'.tr(),
           delayMs: 450,
         ),
         _BenefitItem(
-          title: isMarathi
-              ? '🌳 भविष्यातील पिढ्यांसाठी'
-              : '🌳 For Future Generations',
-          description: isMarathi
-              ? 'आपल्या मुलांसाठी एक हिरवेगार आणि निरोगी जग तयार करा.'
-              : 'Leave behind a greener, healthier world for our children.',
+          title: 'ui_key_148'.tr(),
+          description: 'ui_key_149'.tr(),
           delayMs: 500,
         ),
       ],
@@ -209,7 +196,7 @@ class SeedBallsInitiative extends StatelessWidget {
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Text(
-                    isMarathi ? 'नवीन उपक्रम' : 'NEW INITIATIVE',
+                    'ui_key_150'.tr(),
                     style: GoogleFonts.inter(
                       fontSize: 10,
                       fontWeight: FontWeight.bold,
@@ -220,9 +207,7 @@ class SeedBallsInitiative extends StatelessWidget {
                 ),
                 const SizedBox(height: 12),
                 Text(
-                  isMarathi
-                      ? 'सीड बॉल्स (बीजगोळे) मोहीम'
-                      : 'The Seed Balls Campaign',
+                  'ui_key_151'.tr(),
                   style: GoogleFonts.outfit(
                     fontSize: 20,
                     fontWeight: FontWeight.bold,
@@ -231,9 +216,7 @@ class SeedBallsInitiative extends StatelessWidget {
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  isMarathi
-                      ? 'दुर्गम भागात झाडे लावण्यासाठी सीड बॉल्स हा एक सोपा आणि प्रभावी मार्ग आहे. माती आणि खताच्या गोळ्यात बिया सुरक्षित राहतात आणि पावसाळ्यात रुजतात. या पावसाळ्यात हजारो सीड बॉल्स फेकून डोंगर हिरवेगार करण्यासाठी आमच्यात सामील व्हा!'
-                      : 'Seed balls are an ancient and incredibly effective method of reforestation in hard-to-reach areas. Encased in a mixture of clay and compost, seeds remain protected from predators until the monsoon rains trigger their germination. Join us this season in throwing thousands of seed balls to revive our barren hills!',
+                  'ui_key_152'.tr(),
                   style: GoogleFonts.inter(
                     fontSize: 14,
                     color: AppColors.textSecondary,
@@ -246,5 +229,253 @@ class SeedBallsInitiative extends StatelessWidget {
         ],
       ),
     ).animate().fadeIn(delay: 600.ms).slideY(begin: 0.2, end: 0);
+  }
+}
+
+class GreenEarthInfoSection extends StatelessWidget {
+  final bool isMarathi;
+
+  const GreenEarthInfoSection({super.key, required this.isMarathi});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            const Color(0xFF047857).withValues(alpha: 0.1),
+            const Color(0xFF10B981).withValues(alpha: 0.05),
+          ],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: const Color(0xFF10B981).withValues(alpha: 0.3),
+          width: 1,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF10B981).withValues(alpha: 0.2),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  CupertinoIcons.leaf_arrow_circlepath,
+                  color: Color(0xFF047857),
+                  size: 24,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  isMarathi ? 'हरित पृथ्वी माहिती' : 'Green Earth Information',
+                  style: GoogleFonts.outfit(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.textPrimary,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          Text(
+            isMarathi
+                ? 'आमचा हरित पृथ्वी उपक्रम स्थानिक समुदायांना शाश्वत पद्धती आणण्यावर लक्ष केंद्रित करतो. शहरी भागांचे हिरव्यागार जागेत रूपांतर करण्यासाठी आम्ही संसाधने आणि समर्थन प्रदान करतो. जैवविविधतेला चालना देऊन, आपण आपल्या ग्रहाला बरे करण्याच्या दिशेने एक महत्त्वपूर्ण पाऊल उचलतो.'
+                : 'The Green Earth Initiative focuses on bringing sustainable practices to local communities. We provide resources, guidance, and support to transform urban areas into lush, green spaces. By actively reducing our carbon footprint and promoting biodiversity, we take a significant step towards healing our planet.',
+            style: GoogleFonts.inter(
+              fontSize: 14,
+              color: AppColors.textSecondary,
+              height: 1.5,
+            ),
+          ),
+          const SizedBox(height: 16),
+          _InfoPoint(
+            text: isMarathi
+                ? 'परिसंस्थेचा समतोल राखण्यासाठी देशी झाडे लावणे.'
+                : 'Planting native trees to restore ecological balance.',
+          ),
+          _InfoPoint(
+            text: isMarathi
+                ? 'शाश्वत जीवनाविषयी समुदायांना शिक्षित करणे.'
+                : 'Educating communities on sustainable living.',
+          ),
+          _InfoPoint(
+            text: isMarathi
+                ? 'शहरी वन्यजीवांसाठी हिरवे पट्टे तयार करणे.'
+                : 'Creating green corridors for urban wildlife.',
+          ),
+        ],
+      ),
+    ).animate().fadeIn(delay: 500.ms).slideY(begin: 0.1);
+  }
+}
+
+class _InfoPoint extends StatelessWidget {
+  final String text;
+
+  const _InfoPoint({required this.text});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8.0),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Padding(
+            padding: EdgeInsets.only(top: 2.0),
+            child: Icon(
+              CupertinoIcons.circle_fill,
+              size: 8,
+              color: AppColors.primary,
+            ),
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              text,
+              style: GoogleFonts.inter(
+                fontSize: 13,
+                color: AppColors.textPrimary,
+                height: 1.4,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class VasundharaAbhiyanInfoSection extends StatelessWidget {
+  final bool isMarathi;
+
+  const VasundharaAbhiyanInfoSection({super.key, required this.isMarathi});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.03),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+        border: Border.all(
+          color: Colors.green.shade100,
+          width: 1,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: AppColors.primary.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: const Icon(
+                  CupertinoIcons.tree,
+                  color: AppColors.primary,
+                  size: 28,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  isMarathi ? 'वसुंधरा अभियानाबद्दल' : 'About Vasundhara Abhiyan',
+                  style: GoogleFonts.outfit(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.textPrimary,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          Text(
+            isMarathi
+                ? 'हरित वसुंधरा अभियान ही एक जनचळवळ आहे जिचे उद्दिष्ट पृथ्वीचे हरित आवरण वाढवणे आणि हवामान बदलाचा सामना करणे आहे. या मोहिमेद्वारे लाखो झाडे लावण्याचा आमचा संकल्प आहे.'
+                : 'The Green Vasundhara Abhiyan is a mass movement aimed at restoring the Earth\'s green cover and combating climate change. Through this initiative, we are determined to plant millions of trees worldwide.',
+            style: GoogleFonts.inter(
+              fontSize: 14,
+              color: AppColors.textSecondary,
+              height: 1.5,
+            ),
+          ),
+          const SizedBox(height: 20),
+          _buildStatRow(
+            icon: Icons.public,
+            title: isMarathi ? 'जागतिक दृष्टी' : 'Global Vision',
+            desc: isMarathi ? 'हरित आणि शाश्वत भविष्य.' : 'A greener and sustainable future.',
+          ),
+          const SizedBox(height: 12),
+          _buildStatRow(
+            icon: Icons.groups,
+            title: isMarathi ? 'जनसहभाग' : 'Citizen Participation',
+            desc: isMarathi ? 'समुदायांना एकत्र आणणे.' : 'Bringing communities together.',
+          ),
+          const SizedBox(height: 12),
+          _buildStatRow(
+            icon: Icons.eco,
+            title: isMarathi ? 'जैवविविधता' : 'Biodiversity',
+            desc: isMarathi ? 'स्थानिक वनस्पती आणि प्राण्यांचे संरक्षण.' : 'Protecting native flora and fauna.',
+          ),
+        ],
+      ),
+    ).animate().fadeIn(delay: 550.ms).slideY(begin: 0.1);
+  }
+
+  Widget _buildStatRow({required IconData icon, required String title, required String desc}) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Icon(icon, color: AppColors.primary, size: 24),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                title,
+                style: GoogleFonts.inter(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 15,
+                  color: AppColors.textPrimary,
+                ),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                desc,
+                style: GoogleFonts.inter(
+                  fontSize: 13,
+                  color: AppColors.textSecondary,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
   }
 }

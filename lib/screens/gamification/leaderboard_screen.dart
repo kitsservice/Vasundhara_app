@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import '../../providers/user_provider.dart';
-import '../../providers/settings_provider.dart';
 import '../../theme/app_colors.dart';
 import '../../widgets/leaderboard_podium.dart';
 import '../../widgets/leaderboard_list_item.dart';
@@ -26,13 +26,11 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final isMarathi = context.watch<SettingsProvider>().isMarathi;
-
     return Scaffold(
       backgroundColor: Colors.grey.shade50,
       appBar: AppBar(
         title: Text(
-          isMarathi ? 'लीडरबोर्ड' : 'Community Leaderboard',
+          'ui_key_59'.tr(),
           style: GoogleFonts.outfit(
             fontWeight: FontWeight.bold,
             color: AppColors.textPrimary,
@@ -54,9 +52,7 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
                   const Icon(CupertinoIcons.tree, size: 64, color: Colors.grey),
                   const SizedBox(height: 16),
                   Text(
-                    isMarathi
-                        ? 'अद्याप कुणीही झाडे लावली नाहीत'
-                        : 'No planters yet. Be the first!',
+                    'ui_key_60'.tr(),
                     style: GoogleFonts.inter(
                       fontSize: 16,
                       color: AppColors.textSecondary,

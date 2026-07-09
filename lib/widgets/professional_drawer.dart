@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import '../providers/settings_provider.dart';
+import 'package:easy_localization/easy_localization.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:provider/provider.dart';
 import 'package:firebase_auth/firebase_auth.dart' hide AuthProvider;
@@ -15,7 +16,6 @@ class ProfessionalDrawer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isMarathi = context.watch<SettingsProvider>().isMarathi;
     return Drawer(
       backgroundColor: AppColors.surface,
       child: Column(
@@ -44,14 +44,28 @@ class ProfessionalDrawer extends StatelessWidget {
               ),
               child: Row(
                 children: [
-                  Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.2),
-                      shape: BoxShape.circle,
-                    ),
-                    child:
-                        const Icon(Icons.person, color: Colors.white, size: 32),
+                  StreamBuilder<User?>(
+                    stream: FirebaseAuth.instance.userChanges(),
+                    builder: (context, snapshot) {
+                      final photoURL = snapshot.data?.photoURL;
+                      return Container(
+                        width: 56,
+                        height: 56,
+                        decoration: BoxDecoration(
+                          color: Colors.white.withValues(alpha: 0.2),
+                          shape: BoxShape.circle,
+                          image: photoURL != null
+                              ? DecorationImage(
+                                  image: CachedNetworkImageProvider(photoURL),
+                                  fit: BoxFit.cover,
+                                )
+                              : null,
+                        ),
+                        child: photoURL == null
+                            ? const Icon(Icons.person, color: Colors.white, size: 32)
+                            : null,
+                      );
+                    },
                   ),
                   const SizedBox(width: 16),
                   Expanded(
@@ -60,7 +74,7 @@ class ProfessionalDrawer extends StatelessWidget {
                       children: [
                         Text(
                           FirebaseAuth.instance.currentUser?.displayName ??
-                              (isMarathi ? 'वसुंधरा' : 'Vasundhara'),
+                              ('ui_key_168'.tr()),
                           style: const TextStyle(
                             color: Colors.white,
                             fontSize: 20,
@@ -71,7 +85,7 @@ class ProfessionalDrawer extends StatelessWidget {
                         ),
                         Text(
                           FirebaseAuth.instance.currentUser?.email ??
-                              (isMarathi ? 'पृथ्वी रक्षक' : 'Earth Guardian'),
+                              ('ui_key_169'.tr()),
                           style: TextStyle(
                             color: Colors.white.withValues(alpha: 0.8),
                             fontSize: 14,
@@ -95,7 +109,7 @@ class ProfessionalDrawer extends StatelessWidget {
               color: AppColors.primary,
             ),
             title: Text(
-              isMarathi ? 'माझी प्रमाणपत्रे' : 'My Certificates',
+              'ui_key_170'.tr(),
               style: const TextStyle(fontWeight: FontWeight.w600),
             ),
             trailing: const Icon(CupertinoIcons.chevron_right, size: 16),
@@ -117,15 +131,57 @@ class ProfessionalDrawer extends StatelessWidget {
               color: AppColors.error,
             ),
             title: Text(
-              isMarathi ? 'बाहेर पडा' : 'Logout',
+              'ui_key_171'.tr(),
               style: const TextStyle(color: AppColors.error),
             ),
             onTap: () {
-              // Note: AuthWrapper will automatically redirect after this
-              context.read<AuthProvider>().signOut();
+              _showLogoutDialog(context);
             },
           ),
           const SizedBox(height: 16),
+        ],
+      ),
+    );
+  }
+
+  void _showLogoutDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Text(
+          context.locale.languageCode == 'mr' ? 'बाहेर पडा' : 'Log Out',
+          style: const TextStyle(fontWeight: FontWeight.bold),
+        ),
+        content: Text(
+          context.locale.languageCode == 'mr'
+              ? 'तुम्हाला नक्की बाहेर पडायचे आहे का?'
+              : 'Are you sure you want to log out?',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text(
+              context.locale.languageCode == 'mr' ? 'नाही' : 'Cancel',
+              style: const TextStyle(color: Colors.grey),
+            ),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(context);
+              context.read<AuthProvider>().signOut();
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.redAccent,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+            ),
+            child: Text(
+              context.locale.languageCode == 'mr' ? 'होय, बाहेर पडा' : 'Log Out',
+              style: const TextStyle(color: Colors.white),
+            ),
+          ),
         ],
       ),
     );

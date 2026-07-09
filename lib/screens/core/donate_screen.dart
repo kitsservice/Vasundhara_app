@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_animate/flutter_animate.dart';
-import '../../providers/settings_provider.dart';
 import '../../providers/user_provider.dart';
 import '../../theme/app_colors.dart';
 import '../../widgets/common/custom_text_field.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class DonateScreen extends StatefulWidget {
   const DonateScreen({super.key});
@@ -23,6 +25,7 @@ class _DonateScreenState extends State<DonateScreen> {
   final _addressController = TextEditingController();
   final _reasonController = TextEditingController();
   String _selectedDonationType = 'Trees / Saplings';
+  bool _isSubmitting = false;
 
   final List<String> _donationTypesEn = [
     'Trees / Saplings',
@@ -48,29 +51,68 @@ class _DonateScreenState extends State<DonateScreen> {
     super.dispose();
   }
 
-  void _submitForm(bool isMarathi) {
+  Future<void> _submitForm(bool isMarathi) async {
     if (_formKey.currentState!.validate()) {
-      // Dummy Submission Logic
-      // Unlock Gamification Badge
-      context.read<UserProvider>().unlockBadge('green_philanthropist');
+      setState(() => _isSubmitting = true);
+      
+      try {
+        final user = FirebaseAuth.instance.currentUser;
+        final amountOrQty = double.tryParse(_quantityController.text.trim()) ?? 0.0;
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            isMarathi
-                ? 'तुमच्या दानाबद्दल धन्यवाद! तुम्हाला "ग्रीन फिलान्थ्रोपिस्ट" बॅज मिळाला आहे!'
-                : 'Donation Accepted! You earned the "Green Philanthropist" badge!',
-          ),
-          backgroundColor: AppColors.primary,
-        ),
-      );
-      Navigator.pop(context);
+        // Save to donations collection
+        await FirebaseFirestore.instance.collection('donations').add({
+          'userId': user?.uid ?? 'anonymous',
+          'userName': _nameController.text.trim(),
+          'phone': _phoneController.text.trim(),
+          'type': _selectedDonationType,
+          'amount': amountOrQty,
+          'address': _addressController.text.trim(),
+          'reason': _reasonController.text.trim(),
+          'status': 'pending',
+          'timestamp': FieldValue.serverTimestamp(),
+        });
+
+        // Notify Admin
+        await FirebaseFirestore.instance.collection('admin_notifications').add({
+          'title': 'New Donation Request',
+          'message': '${_nameController.text.trim()} requested to donate $_selectedDonationType',
+          'type': 'donation_request',
+          'userName': _nameController.text.trim(),
+          'amount': amountOrQty,
+          'status': 'pending',
+          'isRead': false,
+          'createdAt': FieldValue.serverTimestamp(),
+        });
+
+        // Unlock Gamification Badge
+        if (mounted) {
+          context.read<UserProvider>().unlockBadge('green_philanthropist');
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('ui_key_25'.tr()),
+              backgroundColor: AppColors.primary,
+            ),
+          );
+          Navigator.pop(context);
+        }
+      } catch (e) {
+        debugPrint('Error submitting donation: $e');
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Error submitting request.')),
+          );
+        }
+      } finally {
+        if (mounted) {
+          setState(() => _isSubmitting = false);
+        }
+      }
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final isMarathi = context.watch<SettingsProvider>().isMarathi;
+    final isMarathi = context.locale.languageCode == 'mr';
     final List<String> currentTypes =
         isMarathi ? _donationTypesMr : _donationTypesEn;
 
@@ -78,7 +120,7 @@ class _DonateScreenState extends State<DonateScreen> {
       backgroundColor: AppColors.background,
       appBar: AppBar(
         title: Text(
-          isMarathi ? 'दान करा' : 'Make a Donation',
+          'ui_key_26'.tr(),
           style: GoogleFonts.outfit(
             fontWeight: FontWeight.bold,
             color: AppColors.textPrimary,
@@ -96,9 +138,7 @@ class _DonateScreenState extends State<DonateScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                isMarathi
-                    ? 'तुम्ही वसुंधरासाठी काय दान करू इच्छिता?'
-                    : 'What would you like to donate for Vasundhara?',
+                'ui_key_27'.tr(),
                 style: GoogleFonts.outfit(
                   fontSize: 22,
                   fontWeight: FontWeight.bold,
@@ -107,9 +147,7 @@ class _DonateScreenState extends State<DonateScreen> {
               ).animate().fadeIn(duration: 400.ms).slideY(begin: 0.1),
               const SizedBox(height: 12),
               Text(
-                isMarathi
-                    ? 'हरित वसुंधरा अभियान अधिक प्रभावी बनवण्यासाठी तुम्ही जमीन, रोपे किंवा इतर साहित्य दान करू शकता.'
-                    : 'Help make the Green Vasundhara Abhiyan more effective by donating land, saplings, or other materials.',
+                'ui_key_28'.tr(),
                 style: GoogleFonts.inter(
                   fontSize: 14,
                   color: AppColors.textSecondary,
@@ -119,35 +157,29 @@ class _DonateScreenState extends State<DonateScreen> {
               const SizedBox(height: 32),
 
               // Name Field
-              CustomLabel(text: isMarathi ? 'पूर्ण नाव' : 'Full Name'),
+              CustomLabel(text: 'ui_key_29'.tr()),
               CustomTextField(
                 controller: _nameController,
                 icon: CupertinoIcons.person_solid,
                 hintText:
-                    isMarathi ? 'तुमचे नाव प्रविष्ट करा' : 'Enter your name',
-                validatorText: isMarathi
-                    ? 'कृपया नाव प्रविष्ट करा'
-                    : 'Please enter a name',
+                    'ui_key_30'.tr(),
+                validatorText: 'ui_key_31'.tr(),
               ).animate().fadeIn(delay: 200.ms),
               const SizedBox(height: 20),
 
               // Phone Field
-              CustomLabel(text: isMarathi ? 'फोन नंबर' : 'Phone Number'),
+              CustomLabel(text: 'ui_key_32'.tr()),
               CustomTextField(
                 controller: _phoneController,
                 icon: CupertinoIcons.phone_fill,
-                hintText: isMarathi
-                    ? 'तुमचा फोन नंबर प्रविष्ट करा'
-                    : 'Enter your phone number',
+                hintText: 'ui_key_33'.tr(),
                 keyboardType: TextInputType.phone,
-                validatorText: isMarathi
-                    ? 'कृपया वैध फोन नंबर प्रविष्ट करा'
-                    : 'Please enter a valid phone number',
+                validatorText: 'ui_key_34'.tr(),
               ).animate().fadeIn(delay: 300.ms),
               const SizedBox(height: 20),
 
               // Donation Type Dropdown
-              CustomLabel(text: isMarathi ? 'दान प्रकार' : 'Donation Type'),
+              CustomLabel(text: 'ui_key_35'.tr()),
               Container(
                 decoration: BoxDecoration(
                   color: Colors.white,
@@ -209,52 +241,40 @@ class _DonateScreenState extends State<DonateScreen> {
 
               // Quantity / Details
               CustomLabel(
-                text: isMarathi ? 'तपशील किंवा प्रमाण' : 'Details or Quantity',
+                text: 'ui_key_36'.tr(),
               ),
               CustomTextField(
                 controller: _quantityController,
                 icon: CupertinoIcons.info_circle_fill,
-                hintText: isMarathi
-                    ? 'उदा. ५०० बीजगोळे, २ एकर जमीन'
-                    : 'e.g., 500 Seed balls, 2 acres land',
-                validatorText: isMarathi
-                    ? 'कृपया तपशील प्रविष्ट करा'
-                    : 'Please enter details',
+                hintText: 'ui_key_37'.tr(),
+                validatorText: 'ui_key_38'.tr(),
               ).animate().fadeIn(delay: 500.ms),
               const SizedBox(height: 20),
 
               // Location / Address
               CustomLabel(
-                text: isMarathi ? 'पत्ता / ठिकाण' : 'Address / Location',
+                text: 'ui_key_39'.tr(),
               ),
               CustomTextField(
                 controller: _addressController,
                 icon: CupertinoIcons.location_solid,
-                hintText: isMarathi
-                    ? 'पूर्ण पत्ता प्रविष्ट करा'
-                    : 'Enter complete address',
+                hintText: 'ui_key_40'.tr(),
                 maxLines: 3,
-                validatorText: isMarathi
-                    ? 'कृपया पत्ता प्रविष्ट करा'
-                    : 'Please enter an address',
+                validatorText: 'ui_key_41'.tr(),
               ).animate().fadeIn(delay: 600.ms),
               const SizedBox(height: 20),
 
               // Reason for Donation
               CustomLabel(
                 text:
-                    isMarathi ? 'दानाचा उद्देश / कारण' : 'Reason for Donation',
+                    'ui_key_42'.tr(),
               ),
               CustomTextField(
                 controller: _reasonController,
                 icon: CupertinoIcons.text_quote,
-                hintText: isMarathi
-                    ? 'दानाचा उद्देश सांगा (उदा. वाढदिवस, स्मरणार्थ)'
-                    : 'State the reason (e.g. Birthday, Memorial)',
+                hintText: 'ui_key_43'.tr(),
                 maxLines: 2,
-                validatorText: isMarathi
-                    ? 'कृपया दानाचे कारण सांगा'
-                    : 'Please provide a reason',
+                validatorText: 'ui_key_44'.tr(),
               ).animate().fadeIn(delay: 650.ms),
               const SizedBox(height: 40),
 
@@ -263,7 +283,7 @@ class _DonateScreenState extends State<DonateScreen> {
                 width: double.infinity,
                 height: 56,
                 child: ElevatedButton(
-                  onPressed: () => _submitForm(isMarathi),
+                  onPressed: _isSubmitting ? null : () => _submitForm(isMarathi),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.primary,
                     shape: RoundedRectangleBorder(
@@ -272,16 +292,18 @@ class _DonateScreenState extends State<DonateScreen> {
                     elevation: 4,
                     shadowColor: AppColors.primary.withValues(alpha: 0.4),
                   ),
-                  child: Text(
-                    isMarathi ? 'दान पाठवा' : 'Submit Donation Request',
-                    style: GoogleFonts.inter(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
-                    ),
-                  ),
+                  child: _isSubmitting 
+                    ? const CircularProgressIndicator(color: Colors.white) 
+                    : Text(
+                        'ui_key_45'.tr(),
+                        style: GoogleFonts.inter(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
+                      ),
                 ),
-              ).animate().fadeIn(delay: 700.ms).slideY(begin: 0.2),
+              ).animate().fadeIn(delay: 750.ms).slideY(begin: 0.2),
               const SizedBox(height: 40),
             ],
           ),

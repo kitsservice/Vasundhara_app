@@ -21,7 +21,7 @@ class ProfileInfoCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.primary,
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
@@ -40,7 +40,7 @@ class ProfileInfoCard extends StatelessWidget {
             style: const TextStyle(
               fontSize: 24,
               fontWeight: FontWeight.bold,
-              color: AppColors.textPrimary,
+              color: Colors.white,
             ),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
@@ -50,7 +50,7 @@ class ProfileInfoCard extends StatelessWidget {
             FirebaseAuth.instance.currentUser?.email ?? 'Joined June 2026',
             style: const TextStyle(
               fontSize: 14,
-              color: AppColors.textSecondary,
+              color: Colors.white70,
             ),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
@@ -67,7 +67,7 @@ class ProfileInfoCard extends StatelessWidget {
               Container(
                 width: 1,
                 height: 40,
-                color: Colors.grey.shade200,
+                color: Colors.white24,
               ),
               ProfileStat(
                 title: 'Badges',

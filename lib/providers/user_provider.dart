@@ -10,6 +10,7 @@ class PlantedTree {
   final String location;
   final int quantity;
   final String? imageUrl;
+  final List<String>? imageUrls;
   final String? growthImageUrl;
   final double? latitude;
   final double? longitude;
@@ -21,6 +22,7 @@ class PlantedTree {
     required this.location,
     required this.quantity,
     this.imageUrl,
+    this.imageUrls,
     this.growthImageUrl,
     this.latitude,
     this.longitude,
@@ -33,6 +35,7 @@ class PlantedTree {
       'location': location,
       'quantity': quantity,
       'imageUrl': imageUrl,
+      'imageUrls': imageUrls,
       'growthImageUrl': growthImageUrl,
       'latitude': latitude,
       'longitude': longitude,
@@ -40,6 +43,13 @@ class PlantedTree {
   }
 
   factory PlantedTree.fromMap(Map<String, dynamic> map, {String? id}) {
+    List<String>? parsedUrls;
+    if (map['imageUrls'] != null) {
+      parsedUrls = List<String>.from(map['imageUrls']);
+    } else if (map['imageUrl'] != null) {
+      parsedUrls = [map['imageUrl'] as String];
+    }
+    
     return PlantedTree(
       id: id,
       speciesName: map['speciesName'] ?? '',
@@ -47,6 +57,7 @@ class PlantedTree {
       location: map['location'] ?? '',
       quantity: map['quantity']?.toInt() ?? 0,
       imageUrl: map['imageUrl'],
+      imageUrls: parsedUrls,
       growthImageUrl: map['growthImageUrl'],
       latitude: map['latitude']?.toDouble(),
       longitude: map['longitude']?.toDouble(),
@@ -84,6 +95,9 @@ class UserProvider extends ChangeNotifier {
 
   List<PlantedTree> get plantedTrees => _plantedTrees;
 
+  int _pledgeTarget = 0;
+  int get pledgeTarget => _pledgeTarget;
+
   int get totalTreesPlanted =>
       _plantedTrees.fold(0, (total, item) => total + item.quantity);
   int get totalTreesSurvived =>
@@ -110,6 +124,7 @@ class UserProvider extends ChangeNotifier {
         }
         _plantedTrees.sort((a, b) => b.datePlanted.compareTo(a.datePlanted));
         notifyListeners();
+        checkAndUnlockDynamicBadges();
       },
       onError: (e) {
         _isListening = false;
@@ -120,11 +135,45 @@ class UserProvider extends ChangeNotifier {
 
   Future<void> fetchPlantedTrees() async {
     listenToPlantedTrees();
+    listenToUserData();
+  }
+
+  StreamSubscription<DocumentSnapshot>? _userSubscription;
+
+  void listenToUserData() {
+    final user = _auth.currentUser;
+    if (user == null) return;
+    _userSubscription?.cancel();
+    _userSubscription = _firestore
+        .collection('users')
+        .doc(user.uid)
+        .snapshots()
+        .listen((snapshot) {
+      if (snapshot.exists) {
+        final data = snapshot.data();
+        if (data != null) {
+          if (data['isBanned'] == true) {
+            _auth.signOut();
+            clearData();
+            return;
+          }
+          _pledgeTarget = data['pledgeTarget'] ?? 0;
+          if (data['unlockedBadges'] != null) {
+            _unlockedBadges.clear();
+            _unlockedBadges.addAll(List<String>.from(data['unlockedBadges']));
+          }
+          notifyListeners();
+          checkAndUnlockDynamicBadges();
+        }
+      }
+    });
   }
 
   void clearData() {
     _subscription?.cancel();
+    _userSubscription?.cancel();
     _isListening = false;
+    _pledgeTarget = 0;
     _plantedTrees.clear();
     _notifications.clear();
     _unlockedBadges.clear();
@@ -134,6 +183,7 @@ class UserProvider extends ChangeNotifier {
   @override
   void dispose() {
     _subscription?.cancel();
+    _userSubscription?.cancel();
     _isListening = false;
     super.dispose();
   }
@@ -152,6 +202,7 @@ class UserProvider extends ChangeNotifier {
           'name': data['name'] ?? 'Green Guardian',
           'trees': data['totalTreesPlanted'] ?? 0,
           'uid': doc.id,
+          'badges': List<String>.from(data['unlockedBadges'] ?? []),
         };
       }).toList();
       notifyListeners();
@@ -184,6 +235,20 @@ class UserProvider extends ChangeNotifier {
 
       for (var doc in personalSnapshot.docs) {
         final data = doc.data();
+        
+        // Expiry Logic
+        bool isExpired = false;
+        if (data['visibleUntil'] != null) {
+          final visibleUntil = (data['visibleUntil'] as dynamic).toDate();
+          if (DateTime.now().isAfter(visibleUntil)) isExpired = true;
+        }
+        if (data['expiryDate'] != null) {
+          final expiryDate = (data['expiryDate'] as dynamic).toDate();
+          if (DateTime.now().isAfter(expiryDate)) isExpired = true;
+        }
+        
+        if (isExpired) continue;
+
         data['id'] = doc.id;
         allNotifs.add(data);
       }
@@ -191,6 +256,8 @@ class UserProvider extends ChangeNotifier {
       final userDoc = await _firestore.collection('users').doc(user.uid).get();
       final lastCleared =
           userDoc.data()?['lastClearedAnnouncementsTime'] as Timestamp?;
+
+      final DateTime? userCreationTime = user.metadata.creationTime;
 
       for (var doc in globalSnapshot.docs) {
         final data = doc.data();
@@ -201,6 +268,26 @@ class UserProvider extends ChangeNotifier {
             continue;
           }
         }
+        
+        // Filter out announcements sent before the user registered
+        if (createdAt != null && userCreationTime != null) {
+          if (createdAt.toDate().isBefore(userCreationTime)) {
+            continue;
+          }
+        }
+        
+        // Expiry Logic
+        bool isExpired = false;
+        if (data['visibleUntil'] != null) {
+          final visibleUntil = (data['visibleUntil'] as dynamic).toDate();
+          if (DateTime.now().isAfter(visibleUntil)) isExpired = true;
+        }
+        if (data['expiryDate'] != null) {
+          final expiryDate = (data['expiryDate'] as dynamic).toDate();
+          if (DateTime.now().isAfter(expiryDate)) isExpired = true;
+        }
+        
+        if (isExpired) continue;
 
         data['id'] = doc.id;
         // Global announcements are unread by default, maybe handled differently in UI
@@ -328,6 +415,7 @@ class UserProvider extends ChangeNotifier {
       final treeRef = userRef.collection('trees').doc();
       final globalTreeRef =
           _firestore.collection('planted_trees').doc(treeRef.id);
+      final adminNotificationRef = _firestore.collection('admin_notifications').doc();
 
       final treeData = tree.toMap();
       treeData['userId'] = user.uid;
@@ -338,6 +426,17 @@ class UserProvider extends ChangeNotifier {
 
         transaction.set(globalTreeRef, treeData);
         transaction.set(treeRef, treeData);
+        
+        transaction.set(adminNotificationRef, {
+          'title': '${tree.quantity} ${tree.speciesName} Planted',
+          'message': 'By ${user.displayName ?? 'Green Guardian'}',
+          'type': 'tree_planted',
+          'userName': user.displayName ?? 'Green Guardian',
+          'quantity': tree.quantity,
+          'status': 'Added',
+          'isRead': false,
+          'createdAt': FieldValue.serverTimestamp(),
+        });
 
         if (!userSnapshot.exists) {
           transaction.set(userRef, {
@@ -376,6 +475,17 @@ class UserProvider extends ChangeNotifier {
           .doc(treeId)
           .update({'growthImageUrl': growthImageUrl});
 
+      // Notify Admin
+      await _firestore.collection('admin_notifications').add({
+        'title': '6-Month Growth Photo Uploaded',
+        'message': '${user.displayName ?? 'A user'} uploaded a growth photo for their tree.',
+        'type': 'growth_update_uploaded',
+        'userName': user.displayName ?? 'Unknown',
+        'treeId': treeId,
+        'isRead': false,
+        'createdAt': FieldValue.serverTimestamp(),
+      });
+
       // Find it in the local list and update
       final index = _plantedTrees.indexWhere((tree) => tree.id == treeId);
       if (index != -1) {
@@ -387,6 +497,7 @@ class UserProvider extends ChangeNotifier {
           location: oldTree.location,
           quantity: oldTree.quantity,
           imageUrl: oldTree.imageUrl,
+          imageUrls: oldTree.imageUrls,
           growthImageUrl: growthImageUrl, // the new URL
           latitude: oldTree.latitude,
           longitude: oldTree.longitude,
@@ -414,8 +525,71 @@ class UserProvider extends ChangeNotifier {
           },
           SetOptions(merge: true),
         );
+
+        // Notify Admin
+        await _firestore.collection('admin_notifications').add({
+          'title': 'Badge Unlocked!',
+          'message': '${user.displayName ?? 'A user'} unlocked the $badgeId badge.',
+          'type': 'badge_unlocked',
+          'userName': user.displayName ?? 'Unknown',
+          'badgeId': badgeId,
+          'isRead': false,
+          'createdAt': FieldValue.serverTimestamp(),
+        });
       } catch (e) {
         debugPrint('Error unlocking badge: $e');
+      }
+    }
+  }
+
+  Future<void> savePledge(int targetTrees) async {
+    final user = _auth.currentUser;
+    if (user == null) return;
+    
+    try {
+      await _firestore.collection('users').doc(user.uid).set(
+        {'pledgeTarget': targetTrees},
+        SetOptions(merge: true),
+      );
+      _pledgeTarget = targetTrees;
+      notifyListeners();
+    } catch (e) {
+      debugPrint('Error saving pledge: $e');
+    }
+  }
+
+  Future<void> checkAndUnlockDynamicBadges() async {
+    final user = _auth.currentUser;
+    if (user == null) return;
+    bool changed = false;
+
+    if (!_unlockedBadges.contains('botanist')) {
+      final uniqueSpecies = _plantedTrees.map((e) => e.speciesName).toSet().length;
+      if (uniqueSpecies >= 5) {
+        _unlockedBadges.add('botanist');
+        changed = true;
+      }
+    }
+
+    if (!_unlockedBadges.contains('caregiver')) {
+      final hasGrowthPhoto = _plantedTrees.any((e) => e.growthImageUrl != null);
+      if (hasGrowthPhoto) {
+        _unlockedBadges.add('caregiver');
+        changed = true;
+      }
+    }
+
+    if (changed) {
+      notifyListeners();
+      try {
+        await _firestore.collection('users').doc(user.uid).set(
+          {
+            'unlockedBadges': FieldValue.arrayUnion(_unlockedBadges),
+          },
+          SetOptions(merge: true),
+        );
+      } catch (e) {
+        debugPrint('Error unlocking dynamic badges: $e');
       }
     }
   }

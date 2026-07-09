@@ -1,40 +1,45 @@
 import 'dart:convert';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/cupertino.dart';
-import 'package:latlong2/latlong.dart';
 import 'package:http/http.dart' as http;
 import 'package:location/location.dart' as loc;
-import 'package:provider/provider.dart';
-import 'package:cached_network_image/cached_network_image.dart';
-import 'package:url_launcher/url_launcher.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../theme/app_colors.dart';
-import '../../providers/settings_provider.dart';
 import '../../services/firestore_marker_service.dart';
 import '../../models/tree_marker_model.dart';
 import '../../models/nursery_marker_model.dart';
 import '../../core/constants/api_keys.dart';
 
 class OlaMapScreen extends StatefulWidget {
-  const OlaMapScreen({super.key});
+  final double? initialLat;
+  final double? initialLng;
+  final bool showBackButton;
+
+  const OlaMapScreen({
+    super.key,
+    this.initialLat,
+    this.initialLng,
+    this.showBackButton = false,
+  });
 
   @override
   State<OlaMapScreen> createState() => _OlaMapScreenState();
 }
 
 class _OlaMapScreenState extends State<OlaMapScreen> {
-  bool get isMarathi => context.read<SettingsProvider>().isMarathi;
   MethodChannel? _channel;
   bool _mapReady = false;
 
   final TextEditingController _searchController = TextEditingController();
-  bool _isSearching = false;
-  bool _showNurseries = true;
 
   final FirestoreMarkerService _firestoreService = FirestoreMarkerService();
   List<TreeMarkerModel> _trees = [];
   List<NurseryMarkerModel> _nurseries = [];
+  List<Map<String, dynamic>> _suggestedSites = [];
 
   @override
   void initState() {
@@ -44,12 +49,26 @@ class _OlaMapScreenState extends State<OlaMapScreen> {
 
   Future<void> _fetchData() async {
     try {
-      final trees = await _firestoreService.getPlantedTrees();
+      final user = FirebaseAuth.instance.currentUser;
+      bool isAdmin = false;
+      final String? userId = user?.uid;
+      
+      if (user != null) {
+        final doc = await FirebaseFirestore.instance.collection('users').doc(user.uid).get();
+        if (doc.exists) {
+          final role = doc.data()?['role'] as String?;
+          isAdmin = role == 'admin';
+        }
+      }
+      
+      final trees = await _firestoreService.getPlantedTrees(userId: userId, isAdmin: isAdmin);
       final nurseries = await _firestoreService.getNurseries();
+      final suggested = await _firestoreService.getSuggestedSites();
       if (mounted) {
         setState(() {
           _trees = trees;
           _nurseries = nurseries;
+          _suggestedSites = suggested;
         });
         _addMarkersToMap();
       }
@@ -75,6 +94,16 @@ class _OlaMapScreenState extends State<OlaMapScreen> {
         });
         debugPrint('Ola Map natively loaded and ready!');
         _addMarkersToMap();
+        
+        if (widget.initialLat != null && widget.initialLng != null) {
+          Future.delayed(const Duration(milliseconds: 500), () {
+            _channel?.invokeMethod('moveToLocation', {
+              'lat': widget.initialLat,
+              'lng': widget.initialLng,
+              'zoom': 18.0,
+            });
+          });
+        }
         break;
       case 'onMapError':
         debugPrint('Ola Map error: ${call.arguments}');
@@ -87,24 +116,34 @@ class _OlaMapScreenState extends State<OlaMapScreen> {
   void _addMarkersToMap() {
     if (!_mapReady || _channel == null) return;
     
-    if (_showNurseries) {
-      for (var nursery in _nurseries) {
-        _channel!.invokeMethod('addMarker', {
-          'id': 'nursery_${nursery.id}',
-          'lat': nursery.latitude,
-          'lng': nursery.longitude,
-          'type': 'nursery',
-        });
-      }
-    } else {
-      for (var tree in _trees) {
-        _channel!.invokeMethod('addMarker', {
-          'id': 'tree_${tree.id}',
-          'lat': tree.latitude,
-          'lng': tree.longitude,
-          'type': 'tree',
-        });
-      }
+    // Add all nurseries
+    for (var nursery in _nurseries) {
+      _channel!.invokeMethod('addMarker', {
+        'id': 'nursery_${nursery.id}',
+        'lat': nursery.latitude,
+        'lng': nursery.longitude,
+        'type': 'nursery',
+      });
+    }
+
+    // Add all planted trees
+    for (var tree in _trees) {
+      _channel!.invokeMethod('addMarker', {
+        'id': 'tree_${tree.id}',
+        'lat': tree.latitude,
+        'lng': tree.longitude,
+        'type': 'tree',
+      });
+    }
+
+    // Add all suggested sites
+    for (var site in _suggestedSites) {
+      _channel!.invokeMethod('addMarker', {
+        'id': 'suggested_${site['id']}',
+        'lat': (site['latitude'] as num).toDouble(),
+        'lng': (site['longitude'] as num).toDouble(),
+        'type': 'suggested',
+      });
     }
   }
 
@@ -115,7 +154,6 @@ class _OlaMapScreenState extends State<OlaMapScreen> {
       return const Iterable<Map<String, dynamic>>.empty();
     }
 
-    setState(() => _isSearching = true);
     try {
       final response = await http.get(
         Uri.parse(
@@ -135,9 +173,7 @@ class _OlaMapScreenState extends State<OlaMapScreen> {
       debugPrint('Search error: $e');
       return const Iterable<Map<String, dynamic>>.empty();
     } finally {
-      if (mounted) {
-        setState(() => _isSearching = false);
-      }
+      // Nothing to do
     }
   }
 
@@ -157,7 +193,7 @@ class _OlaMapScreenState extends State<OlaMapScreen> {
       }
     }
 
-    final position = await Geolocator.getCurrentPosition();
+    await Geolocator.getCurrentPosition();
     // Assuming native SDK has a moveTo method, we can add it later.
     // For now, we will just fetch location to ensure permissions are good.
   }
@@ -165,30 +201,39 @@ class _OlaMapScreenState extends State<OlaMapScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text(isMarathi ? 'वसुंधरा नकाशा' : 'Global Tree Map'),
+      extendBodyBehindAppBar: true,
+      appBar: widget.showBackButton ? AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        leading: Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: CircleAvatar(
+            backgroundColor: Colors.white,
+            child: IconButton(
+              icon: const Icon(Icons.arrow_back, color: Colors.black),
+              onPressed: () => Navigator.pop(context),
+            ),
+          ),
+        ),
+      ) : AppBar(
+        title: Text('ui_key_100'.tr()),
         backgroundColor: Colors.white,
         elevation: 0,
         actions: [
-          IconButton(
-            onPressed: () {
-              setState(() {
-                _showNurseries = !_showNurseries;
-              });
-              _addMarkersToMap();
-            },
-            icon: Icon(
-              _showNurseries ? Icons.storefront : CupertinoIcons.tree,
-              color: AppColors.primary,
-            ),
-            tooltip: _showNurseries ? 'Showing Nurseries' : 'Showing Trees',
-          ),
           TextButton(
             onPressed: () {
-              context.read<SettingsProvider>().toggleLanguage();
+              final code = context.locale.languageCode;
+if (code == 'en') {
+  context.setLocale(const Locale('mr'));
+} else if (code == 'mr') {
+  context.setLocale(const Locale('hi'));
+} else {
+  context.setLocale(const Locale('en'));
+}
+
             },
             child: Text(
-              isMarathi ? 'EN' : 'MR',
+              'ui_key_101'.tr(),
               style: const TextStyle(
                 fontWeight: FontWeight.bold,
                 color: AppColors.primary,
@@ -244,8 +289,8 @@ class _OlaMapScreenState extends State<OlaMapScreen> {
             return option['display_name'] as String;
           },
           onSelected: (Map<String, dynamic> selection) {
-            final lat = double.parse(selection['lat'].toString());
-            final lon = double.parse(selection['lon'].toString());
+            // final lat = double.parse(selection['lat'].toString());
+            // final lon = double.parse(selection['lon'].toString());
             // _animatedMapMove(LatLng(lat, lon), 15.0);
             FocusScope.of(context).unfocus();
           },
@@ -256,9 +301,7 @@ class _OlaMapScreenState extends State<OlaMapScreen> {
               textInputAction: TextInputAction.search,
               onSubmitted: (_) => onFieldSubmitted(),
               decoration: InputDecoration(
-                hintText: isMarathi
-                    ? 'शहर किंवा ठिकाण शोधा...'
-                    : 'Search for an area or city...',
+                hintText: 'ui_key_102'.tr(),
                 prefixIcon: const Icon(
                   CupertinoIcons.search,
                   color: AppColors.textSecondary,
@@ -311,7 +354,7 @@ class _OlaMapScreenState extends State<OlaMapScreen> {
           mainAxisSize: MainAxisSize.min,
           children: [
             Text(
-              isMarathi ? 'नकाशा सूची' : 'Map Legend',
+              'ui_key_103'.tr(),
               style: const TextStyle(fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 8),
@@ -323,7 +366,7 @@ class _OlaMapScreenState extends State<OlaMapScreen> {
                   size: 20,
                 ),
                 const SizedBox(width: 8),
-                Text(isMarathi ? 'लावलेली झाडे' : 'Planted Trees'),
+                Text('ui_key_104'.tr()),
               ],
             ),
             const SizedBox(height: 4),
@@ -335,7 +378,7 @@ class _OlaMapScreenState extends State<OlaMapScreen> {
                   size: 20,
                 ),
                 const SizedBox(width: 8),
-                Text(isMarathi ? 'रोपवाटिका' : 'Nurseries'),
+                Text('ui_key_105'.tr()),
               ],
             ),
           ],

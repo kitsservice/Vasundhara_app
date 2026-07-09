@@ -1,19 +1,6 @@
 import 'package:flutter/material.dart';
 
 class SettingsProvider extends ChangeNotifier {
-  bool _isMarathi = false;
-
-  bool get isMarathi => _isMarathi;
-
-  void toggleLanguage() {
-    _isMarathi = !_isMarathi;
-    notifyListeners();
-  }
-
-  void setLanguage(bool isMarathi) {
-    if (_isMarathi != isMarathi) {
-      _isMarathi = isMarathi;
-      notifyListeners();
-    }
-  }
+  // Localization is now handled by easy_localization globally!
+  // SettingsProvider can be used for other app settings in the future.
 }

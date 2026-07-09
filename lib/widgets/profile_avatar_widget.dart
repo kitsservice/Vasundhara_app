@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:image_picker/image_picker.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 import '../../theme/app_colors.dart';
 import '../../services/cloudinary_service.dart';
@@ -29,10 +30,21 @@ class _ProfileAvatarWidgetState extends State<ProfileAvatarWidget> {
         final String? url = await CloudinaryService.uploadImage(File(image.path));
         
         if (url != null) {
-          await FirebaseAuth.instance.currentUser?.updatePhotoURL(url);
-          await FirebaseAuth.instance.currentUser?.reload();
-          // Force a rebuild of the auth state or just this widget
-          setState(() {});
+          final user = FirebaseAuth.instance.currentUser;
+          if (user != null) {
+            await user.updatePhotoURL(url);
+            
+            // Also update Firestore to keep user data in sync across the app
+            await FirebaseFirestore.instance.collection('users').doc(user.uid).set(
+              {'photoUrl': url},
+              SetOptions(merge: true),
+            );
+          }
+          
+          // Force a rebuild to reflect the new photoURL
+          if (mounted) {
+            setState(() {});
+          }
         }
       } catch (e) {
         if (mounted) {
@@ -62,8 +74,9 @@ class _ProfileAvatarWidgetState extends State<ProfileAvatarWidget> {
         alignment: Alignment.center,
         children: [
           CircleAvatar(
+            key: ValueKey(photoURL),
             radius: 50,
-            backgroundColor: AppColors.primary,
+            backgroundColor: Colors.white24,
             backgroundImage:
                 photoURL != null ? CachedNetworkImageProvider(photoURL) : null,
             child: photoURL == null

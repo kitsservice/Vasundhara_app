@@ -1,3 +1,4 @@
+// ignore_for_file: avoid_print
 import 'dart:io';
 
 void main() async {
@@ -94,7 +95,6 @@ void main() async {
 
       if (content != (await entity.readAsString())) {
         await entity.writeAsString(content);
-        // ignore: avoid_print
         print('Updated cross-domain: ${entity.path}');
       }
     }

@@ -1,31 +1,33 @@
 import 'dart:convert';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter/material.dart';
-import '../../providers/settings_provider.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_map_marker_cluster/flutter_map_marker_cluster.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:http/http.dart' as http;
 import 'package:location/location.dart' as loc;
-import 'package:provider/provider.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../theme/app_colors.dart';
 import '../../services/firestore_marker_service.dart';
 import '../../models/tree_marker_model.dart';
 import '../../models/nursery_marker_model.dart';
-import '../../core/constants/api_keys.dart';
 class MapScreen extends StatefulWidget {
-  const MapScreen({super.key});
+  final double? initialLat;
+  final double? initialLng;
+
+  const MapScreen({super.key, this.initialLat, this.initialLng});
 
   @override
   State<MapScreen> createState() => _MapScreenState();
 }
 
 class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
-  bool get isMarathi => context.watch<SettingsProvider>().isMarathi;
+  bool get isMarathi => context.locale.languageCode == 'mr';
   final MapController _mapController = MapController();
   final TextEditingController _searchController = TextEditingController();
   bool _isSearching = false;
@@ -34,21 +36,41 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
   final FirestoreMarkerService _firestoreService = FirestoreMarkerService();
   List<TreeMarkerModel> _trees = [];
   List<NurseryMarkerModel> _nurseries = [];
+  List<Map<String, dynamic>> _suggestedSites = [];
 
   @override
   void initState() {
     super.initState();
     _fetchData();
+    if (widget.initialLat != null && widget.initialLng != null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _animatedMapMove(LatLng(widget.initialLat!, widget.initialLng!), 18.0);
+      });
+    }
   }
 
   Future<void> _fetchData() async {
     try {
-      final trees = await _firestoreService.getPlantedTrees();
+      final user = FirebaseAuth.instance.currentUser;
+      bool isAdmin = false;
+      final String? userId = user?.uid;
+      
+      if (user != null) {
+        final doc = await FirebaseFirestore.instance.collection('users').doc(user.uid).get();
+        if (doc.exists) {
+          final role = doc.data()?['role'] as String?;
+          isAdmin = role == 'admin';
+        }
+      }
+      
+      final trees = await _firestoreService.getPlantedTrees(userId: userId, isAdmin: isAdmin);
       final nurseries = await _firestoreService.getNurseries();
+      final suggested = await _firestoreService.getSuggestedSites();
       if (mounted) {
         setState(() {
           _trees = trees;
           _nurseries = nurseries;
+          _suggestedSites = suggested;
         });
       }
     } catch (e) {
@@ -71,7 +93,7 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
     );
 
     final controller = AnimationController(
-      duration: const Duration(milliseconds: 1200),
+      duration: const Duration(milliseconds: 400),
       vsync: this,
     );
     final Animation<double> animation =
@@ -208,9 +230,9 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
     final Uri url = Uri.parse(
       'https://www.google.com/maps/dir/?api=1&destination=$lat,$lon',
     );
-    if (await canLaunchUrl(url)) {
-      await launchUrl(url);
-    } else {
+    try {
+      await launchUrl(url, mode: LaunchMode.externalApplication);
+    } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -268,7 +290,7 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
               ),
               const SizedBox(height: 24),
               SizedBox(
-                width: double.infinity,
+                width: double.maxFinite,
                 child: ElevatedButton.icon(
                   onPressed: () {
                     Navigator.pop(context);
@@ -324,7 +346,7 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
                 child: CachedNetworkImage(
                   imageUrl: tree.imageUrl,
                   height: 200,
-                  width: double.infinity,
+                  width: double.maxFinite,
                   fit: BoxFit.cover,
                   placeholder: (context, url) =>
                       const Center(child: CircularProgressIndicator()),
@@ -334,7 +356,7 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
             else
               Container(
                 height: 150,
-                width: double.infinity,
+                width: double.maxFinite,
                 decoration: BoxDecoration(
                   color: Colors.grey.shade200,
                   borderRadius: BorderRadius.circular(12),
@@ -344,14 +366,42 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
                       Icon(CupertinoIcons.tree, size: 50, color: Colors.grey),
                 ),
               ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text(isMarathi ? 'बंद करा' : 'Close'),
+          const SizedBox(height: 16),
+          SizedBox(
+            width: double.maxFinite,
+            child: ElevatedButton.icon(
+              onPressed: () {
+                Navigator.pop(context);
+                _openMapsForDirections(
+                  tree.latitude,
+                  tree.longitude,
+                );
+              },
+              icon: const Icon(Icons.directions, color: Colors.white),
+              label: Text(
+                isMarathi ? 'मार्गदर्शक मिळवा' : 'Get Directions',
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primary,
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+            ),
           ),
         ],
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: Text(isMarathi ? 'बंद करा' : 'Close'),
+        ),
+      ],
       ),
     );
   }
@@ -361,17 +411,49 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
     final List<Marker> nurseryMarkers = _nurseries.map((n) {
       return Marker(
         point: LatLng(n.latitude, n.longitude),
-        width: 45,
-        height: 45,
+        width: 32,
+        height: 32,
         child: GestureDetector(
           onTap: () => _showNurseryDetails(n),
           child: Container(
             decoration: BoxDecoration(
               color: Colors.orange.shade100,
               shape: BoxShape.circle,
-              border: Border.all(color: Colors.orange, width: 2),
+              border: Border.all(color: Colors.orange, width: 1.5),
             ),
-            child: const Icon(Icons.storefront, color: Colors.orange, size: 28),
+            child: const Icon(Icons.storefront, color: Colors.orange, size: 20),
+          ),
+        ),
+      );
+    }).toList();
+
+    final List<Marker> suggestedMarkers = _suggestedSites.map((s) {
+      final lat = (s['latitude'] as num).toDouble();
+      final lng = (s['longitude'] as num).toDouble();
+      return Marker(
+        point: LatLng(lat, lng),
+        width: 32,
+        height: 32,
+        child: GestureDetector(
+          onTap: () {
+            showDialog(
+              context: context,
+              builder: (ctx) => AlertDialog(
+                title: const Text('Suggested Planting Site'),
+                content: Text(s['description'] as String? ?? 'No description'),
+                actions: [
+                  TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Close')),
+                ],
+              ),
+            );
+          },
+          child: Container(
+            decoration: BoxDecoration(
+              color: Colors.blue.shade100,
+              shape: BoxShape.circle,
+              border: Border.all(color: Colors.blue, width: 1.5),
+            ),
+            child: const Icon(Icons.flag, color: Colors.blue, size: 20),
           ),
         ),
       );
@@ -397,7 +479,14 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
           ),
           TextButton(
             onPressed: () {
-              context.read<SettingsProvider>().toggleLanguage();
+              final code = context.locale.languageCode;
+              if (code == 'en') {
+                context.setLocale(const Locale('mr'));
+              } else if (code == 'mr') {
+                context.setLocale(const Locale('hi'));
+              } else {
+                context.setLocale(const Locale('en'));
+              }
             },
             child: Text(
               isMarathi ? 'EN' : 'MR',
@@ -412,7 +501,7 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
       ),
       body: Stack(
         children: [
-          _buildMapLayer(nurseryMarkers),
+          _buildMapLayer(nurseryMarkers, suggestedMarkers),
           _buildSearchBar(),
           _buildLocateMeFab(),
           _buildLegend(),
@@ -421,33 +510,31 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
     );
   }
 
-  Widget _buildMapLayer(List<Marker> nurseryMarkers) {
+  Widget _buildMapLayer(List<Marker> nurseryMarkers, List<Marker> suggestedMarkers) {
     return FlutterMap(
       mapController: _mapController,
       options: const MapOptions(
-        initialCenter: LatLng(18.5204, 73.8567),
+        initialCenter: LatLng(20.7002, 77.0082),
         initialZoom: 13.0,
       ),
       children: [
         TileLayer(
-          urlTemplate:
-              'https://api.olamaps.io/tiles/vector/v1/styles/default-light-standard/xyz/{z}/{x}/{y}.png?api_key=${ApiKeys.olaMapsApiKey}',
+          urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
           userAgentPackageName: 'com.vasundhara.treeapp',
         ),
-        if (_showNurseries)
-          MarkerLayer(
-            markers: nurseryMarkers,
-          )
-        else
-          MarkerClusterLayerWidget(
-            options: MarkerClusterLayerOptions(
-              maxClusterRadius: 45,
-              size: const Size(40, 40),
-              alignment: Alignment.center,
-              padding: const EdgeInsets.all(50),
-              maxZoom: 15,
-              markers: _trees.map(
-                (tree) => Marker(
+        MarkerLayer(
+          markers: [...nurseryMarkers, ...suggestedMarkers],
+        ),
+
+        MarkerClusterLayerWidget(
+          options: MarkerClusterLayerOptions(
+            maxClusterRadius: 45,
+            size: const Size(40, 40),
+            alignment: Alignment.center,
+            padding: const EdgeInsets.all(50),
+            maxZoom: 15,
+            markers: _trees.map(
+              (tree) => Marker(
                   point: LatLng(tree.latitude, tree.longitude),
                   width: 50,
                   height: 50,
@@ -467,7 +554,7 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
                       ),
                       child: const Center(
                         child: Icon(
-                          CupertinoIcons.leaf_arrow_circlepath,
+                          CupertinoIcons.tree,
                           color: AppColors.primary,
                           size: 28,
                         ),
@@ -646,7 +733,7 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
             Row(
               children: [
                 const Icon(
-                  CupertinoIcons.leaf_arrow_circlepath,
+                  CupertinoIcons.tree,
                   color: AppColors.primary,
                   size: 20,
                 ),

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:provider/provider.dart';
 import '../../theme/app_colors.dart';
@@ -51,18 +52,18 @@ class _LoginScreenState extends State<LoginScreen> {
             children: [
               const Icon(Icons.eco, color: AppColors.primary, size: 60),
               const SizedBox(height: 24),
-              const Text(
-                'Welcome Back',
-                style: TextStyle(
+              Text(
+                'ui_key_204'.tr(),
+                style: const TextStyle(
                   fontSize: 32,
                   fontWeight: FontWeight.bold,
                   color: AppColors.textPrimary,
                 ),
               ),
               const SizedBox(height: 8),
-              const Text(
-                'Login to continue your green journey.',
-                style: TextStyle(
+              Text(
+                'ui_key_205'.tr(),
+                style: const TextStyle(
                   fontSize: 16,
                   color: AppColors.textSecondary,
                 ),
@@ -109,7 +110,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 controller: _emailController,
                 keyboardType: TextInputType.emailAddress,
                 decoration: InputDecoration(
-                  labelText: 'Email Address',
+                  labelText: 'ui_key_206'.tr(),
                   prefixIcon:
                       const Icon(CupertinoIcons.mail, color: AppColors.primary),
                   filled: true,
@@ -127,7 +128,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 controller: _passwordController,
                 obscureText: true,
                 decoration: InputDecoration(
-                  labelText: 'Password',
+                  labelText: 'ui_key_208'.tr(),
                   prefixIcon:
                       const Icon(CupertinoIcons.lock, color: AppColors.primary),
                   filled: true,
@@ -164,9 +165,9 @@ class _LoginScreenState extends State<LoginScreen> {
                               TextField(
                                 controller: resetEmailController,
                                 keyboardType: TextInputType.emailAddress,
-                                decoration: const InputDecoration(
-                                  labelText: 'Email Address',
-                                  border: OutlineInputBorder(),
+                                decoration: InputDecoration(
+                                  labelText: 'ui_key_206'.tr(),
+                                  border: const OutlineInputBorder(),
                                 ),
                               ),
                             ],
@@ -212,6 +213,7 @@ class _LoginScreenState extends State<LoginScreen> {
                               },
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: AppColors.primary,
+                        foregroundColor: Colors.white,
                               ),
                               child: const Text(
                                 'Send Link',
@@ -223,9 +225,9 @@ class _LoginScreenState extends State<LoginScreen> {
                       },
                     );
                   },
-                  child: const Text(
-                    'Forgot Password?',
-                    style: TextStyle(
+                  child: Text(
+                    'ui_key_210'.tr(),
+                    style: const TextStyle(
                       color: AppColors.primary,
                       fontWeight: FontWeight.bold,
                     ),
@@ -237,13 +239,13 @@ class _LoginScreenState extends State<LoginScreen> {
               // Login Button
               SizedBox(
                 width: double.infinity,
-                height: 56,
                 child: Consumer<AuthProvider>(
                   builder: (context, auth, child) {
                     return ElevatedButton(
                       onPressed: auth.isLoading ? null : _login,
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppColors.primary,
+                        padding: const EdgeInsets.symmetric(vertical: 16),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(16),
                         ),
@@ -257,9 +259,9 @@ class _LoginScreenState extends State<LoginScreen> {
                                 strokeWidth: 3,
                               ),
                             )
-                          : const Text(
-                              'Login',
-                              style: TextStyle(
+                          : Text(
+                              'ui_key_211'.tr(),
+                              style: const TextStyle(
                                 fontSize: 18,
                                 fontWeight: FontWeight.bold,
                                 color: Colors.white,
@@ -275,11 +277,11 @@ class _LoginScreenState extends State<LoginScreen> {
               Row(
                 children: [
                   Expanded(child: Divider(color: Colors.grey.shade300)),
-                  const Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 16),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
                     child: Text(
-                      'OR',
-                      style: TextStyle(color: AppColors.textSecondary),
+                      'ui_key_212'.tr(),
+                      style: const TextStyle(color: AppColors.textSecondary),
                     ),
                   ),
                   Expanded(child: Divider(color: Colors.grey.shade300)),
@@ -290,7 +292,6 @@ class _LoginScreenState extends State<LoginScreen> {
               // Google Login
               SizedBox(
                 width: double.infinity,
-                height: 56,
                 child: Consumer<AuthProvider>(
                   builder: (context, auth, child) {
                     return OutlinedButton.icon(
@@ -300,15 +301,16 @@ class _LoginScreenState extends State<LoginScreen> {
                         CupertinoIcons.person_crop_circle_badge_checkmark,
                         color: AppColors.textPrimary,
                       ),
-                      label: const Text(
-                        'Continue with Google',
-                        style: TextStyle(
+                      label: Text(
+                        'ui_key_213'.tr(),
+                        style: const TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
                           color: AppColors.textPrimary,
                         ),
                       ),
                       style: OutlinedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 16),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(16),
                         ),
@@ -324,9 +326,9 @@ class _LoginScreenState extends State<LoginScreen> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const Text(
-                    "Don't have an account?",
-                    style: TextStyle(color: AppColors.textSecondary),
+                  Text(
+                    'ui_key_214'.tr(),
+                    style: const TextStyle(color: AppColors.textSecondary),
                   ),
                   TextButton(
                     onPressed: () {
@@ -337,9 +339,9 @@ class _LoginScreenState extends State<LoginScreen> {
                         ),
                       );
                     },
-                    child: const Text(
-                      'Sign Up',
-                      style: TextStyle(
+                    child: Text(
+                      'ui_key_215'.tr(),
+                      style: const TextStyle(
                         color: AppColors.primary,
                         fontWeight: FontWeight.bold,
                       ),

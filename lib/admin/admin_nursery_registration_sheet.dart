@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:geocoding/geocoding.dart';
 import '../theme/app_colors.dart';
 
@@ -48,8 +49,8 @@ class _AdminNurseryRegistrationSheetState
 
     try {
       // Default to Pune city center in case geocoding fails (common on emulators)
-      double lat = 18.5204;
-      double lng = 73.8567;
+      double lat = 20.7002;
+      double lng = 77.0082;
 
       try {
         final List<Location> locations = await locationFromAddress(address)
@@ -70,6 +71,17 @@ class _AdminNurseryRegistrationSheetState
         'location': GeoPoint(lat, lng),
         'address': address,
         'rating': 5.0, // Default rating for new nurseries
+        'createdAt': FieldValue.serverTimestamp(),
+      });
+
+      // Notify Admin
+      final user = FirebaseAuth.instance.currentUser;
+      await FirebaseFirestore.instance.collection('admin_notifications').add({
+        'title': 'New Nursery Registered',
+        'message': '$name has been registered by ${user?.displayName ?? ownerName}.',
+        'type': 'nursery_registered',
+        'userName': user?.displayName ?? ownerName,
+        'isRead': false,
         'createdAt': FieldValue.serverTimestamp(),
       });
 
@@ -198,11 +210,11 @@ class _AdminNurseryRegistrationSheetState
           const SizedBox(height: 16),
           SizedBox(
             width: double.infinity,
-            height: 56,
             child: ElevatedButton(
               onPressed: _isSubmitting ? null : _registerNursery,
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.primary,
+                padding: const EdgeInsets.symmetric(vertical: 16),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(16),
                 ),

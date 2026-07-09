@@ -4,6 +4,9 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
 import 'admin_nurseries_list_screen.dart';
+import 'admin_push_notifications_screen.dart';
+
+import 'admin_profile_screen.dart';
 
 class AdminSettingsView extends StatelessWidget {
   const AdminSettingsView({super.key});
@@ -20,16 +23,18 @@ class AdminSettingsView extends StatelessWidget {
             style: GoogleFonts.outfit(
               fontSize: 28,
               fontWeight: FontWeight.w900,
-              color: const Color(0xFF1F2937),
+              color: Colors.white,
               letterSpacing: -0.5,
             ),
           ),
           const SizedBox(height: 8),
           Text(
             'Manage your admin account and preferences.',
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
             style: GoogleFonts.inter(
-              fontSize: 15,
-              color: const Color(0xFF6B7280),
+              fontSize: 14,
+              color: Colors.white70,
             ),
           ),
           const SizedBox(height: 32),
@@ -48,6 +53,14 @@ class AdminSettingsView extends StatelessWidget {
             child: Column(
               children: [
                 ListTile(
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const AdminProfileScreen(),
+                      ),
+                    );
+                  },
                   contentPadding:
                       const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
                   leading: Container(
@@ -89,7 +102,7 @@ class AdminSettingsView extends StatelessWidget {
                       shape: BoxShape.circle,
                     ),
                     child: const Icon(
-                      CupertinoIcons.tree,
+                      Icons.storefront,
                       color: Color(0xFF0369A1),
                     ),
                   ),
@@ -114,6 +127,46 @@ class AdminSettingsView extends StatelessWidget {
                       context,
                       MaterialPageRoute(
                         builder: (context) => const AdminNurseriesListScreen(),
+                      ),
+                    );
+                  },
+                ),
+                const Divider(height: 1, indent: 70),
+                ListTile(
+                  contentPadding:
+                      const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                  leading: Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: const BoxDecoration(
+                      color: Color(0xFFFEF3C7),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(
+                      CupertinoIcons.bell_solid,
+                      color: Color(0xFFD97706),
+                    ),
+                  ),
+                  title: Text(
+                    'Push Notifications',
+                    style: GoogleFonts.inter(
+                      fontWeight: FontWeight.bold,
+                      color: const Color(0xFF1F2937),
+                    ),
+                  ),
+                  subtitle: Text(
+                    'Send global in-app alerts',
+                    style: GoogleFonts.inter(fontSize: 12),
+                  ),
+                  trailing: const Icon(
+                    CupertinoIcons.chevron_right,
+                    size: 16,
+                    color: Colors.grey,
+                  ),
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const AdminPushNotificationsScreen(),
                       ),
                     );
                   },

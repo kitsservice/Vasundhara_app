@@ -1,17 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import '../../providers/settings_provider.dart';
 import '../../theme/app_colors.dart';
 import 'plant_tree_screen.dart';
 import '../../providers/user_provider.dart';
 import 'donate_screen.dart';
 import '../../widgets/campaign/campaign_info_sections.dart';
-import '../../widgets/campaign/campaign_progress_section.dart';
-import '../../widgets/campaign/campaign_leaderboard_preview.dart';
 
 class CampaignHubScreen extends StatefulWidget {
   const CampaignHubScreen({super.key});
@@ -30,17 +28,14 @@ class _CampaignHubScreenState extends State<CampaignHubScreen> {
         .collection('admin')
         .doc('campaign')
         .snapshots();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<UserProvider>().fetchLeaderboard();
-    });
   }
 
   @override
   Widget build(BuildContext context) {
-    final isMarathi = context.watch<SettingsProvider>().isMarathi;
-
-    final leaderboard =
-        context.select<UserProvider, dynamic>((p) => p.leaderboard);
+    final isMarathi = context.locale.languageCode == 'mr';
+    final userProvider = context.watch<UserProvider>();
+    final int pledgeTarget = userProvider.pledgeTarget;
+    final int totalPlanted = userProvider.plantedTrees.fold(0, (total, t) => (total) + t.quantity);
 
     return StreamBuilder<DocumentSnapshot>(
       stream: _campaignStream,
@@ -60,34 +55,32 @@ class _CampaignHubScreenState extends State<CampaignHubScreen> {
         ];
         IconData actionIcon = CupertinoIcons.leaf_arrow_circlepath;
         String actionLabel =
-            isMarathi ? 'अभियानात सामील व्हा' : 'Plant for Abhiyan';
+            'ui_key_17'.tr();
         Color primaryActionColor = AppColors.primary;
 
         if (programType == 'Facilitation Program') {
           displayTitle = customTitle.isNotEmpty
               ? customTitle
-              : (isMarathi ? 'सुविधा कार्यक्रम' : 'Facilitation Program');
+              : ('ui_key_18'.tr());
           appBarGradient = [Colors.blue.shade800, Colors.blue.shade500];
           actionIcon = CupertinoIcons.person_3_fill;
-          actionLabel = isMarathi ? 'सामील व्हा' : 'Join Program';
+          actionLabel = 'ui_key_19'.tr();
           primaryActionColor = Colors.blue.shade700;
         } else if (programType == 'Awareness Drive') {
           displayTitle = customTitle.isNotEmpty
               ? customTitle
-              : (isMarathi ? 'जागरूकता मोहीम' : 'Awareness Drive');
+              : ('ui_key_20'.tr());
           appBarGradient = [Colors.orange.shade800, Colors.orange.shade500];
           actionIcon = CupertinoIcons.speaker_3_fill;
-          actionLabel = isMarathi ? 'समुदायात सामील व्हा' : 'Join the Community';
+          actionLabel = 'ui_key_21'.tr();
           primaryActionColor = Colors.orange.shade700;
         } else {
           displayTitle = customTitle.isNotEmpty
               ? customTitle
-              : (isMarathi
-                  ? 'हरित वसुंधरा अभियान'
-                  : 'Green Vasundhara Abhiyan');
+              : ('ui_key_22'.tr());
           appBarGradient = [const Color(0xFF047857), const Color(0xFF10B981)];
           actionIcon = CupertinoIcons.leaf_arrow_circlepath;
-          actionLabel = isMarathi ? 'अभियानात सामील व्हा' : 'Plant for Abhiyan';
+          actionLabel = 'ui_key_23'.tr();
           primaryActionColor = AppColors.primary;
         }
 
@@ -158,16 +151,17 @@ class _CampaignHubScreenState extends State<CampaignHubScreen> {
                     children: [
                       MissionSection(isMarathi: isMarathi),
                       const SizedBox(height: 24),
+                      if (pledgeTarget > 0) ...[
+                        _buildPledgeSection(pledgeTarget, totalPlanted, isMarathi),
+                        const SizedBox(height: 24),
+                      ],
                       WhyJoinSection(isMarathi: isMarathi),
                       const SizedBox(height: 30),
                       SeedBallsInitiative(isMarathi: isMarathi),
                       const SizedBox(height: 30),
-                      ProgressSection(isMarathi: isMarathi),
-                      const SizedBox(height: 40),
-                      LeaderboardPreview(
-                        isMarathi: isMarathi,
-                        leaderboard: leaderboard,
-                      ),
+                      VasundharaAbhiyanInfoSection(isMarathi: isMarathi),
+                      const SizedBox(height: 30),
+                      GreenEarthInfoSection(isMarathi: isMarathi),
                       const SizedBox(height: 80), // Padding for FAB
                     ],
                   ),
@@ -194,7 +188,7 @@ class _CampaignHubScreenState extends State<CampaignHubScreen> {
                   color: AppColors.primary,
                 ),
                 label: Text(
-                  isMarathi ? 'दान करा' : 'Donate',
+                  'ui_key_24'.tr(),
                   style: const TextStyle(
                     color: AppColors.primary,
                     fontWeight: FontWeight.bold,
@@ -229,6 +223,59 @@ class _CampaignHubScreenState extends State<CampaignHubScreen> {
           ),
         );
       },
+    );
+  }
+
+  Widget _buildPledgeSection(int target, int planted, bool isMarathi) {
+    final double progress = (planted / target).clamp(0.0, 1.0);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(isMarathi ? 'माझा हरित संकल्प' : 'My Green Pledge', style: GoogleFonts.outfit(fontSize: 22, fontWeight: FontWeight.bold, color: AppColors.textPrimary)),
+        const SizedBox(height: 12),
+        Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: Colors.green.shade200),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.green.withValues(alpha: 0.1),
+                blurRadius: 10,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(isMarathi ? 'लक्ष्य' : 'Target', style: const TextStyle(fontWeight: FontWeight.w600, color: Colors.black87)),
+                  Text(isMarathi ? '$target झाडे' : '$target Trees', style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.green)),
+                ],
+              ),
+              const SizedBox(height: 12),
+              ClipRRect(
+                borderRadius: BorderRadius.circular(8),
+                child: LinearProgressIndicator(
+                  value: progress,
+                  minHeight: 12,
+                  backgroundColor: Colors.green.shade50,
+                  valueColor: const AlwaysStoppedAnimation<Color>(Colors.green),
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                isMarathi ? '$planted / $target लावली' : '$planted / $target planted',
+                style: TextStyle(color: Colors.grey.shade600, fontSize: 12, fontWeight: FontWeight.w500),
+              ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 }

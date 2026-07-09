@@ -24,8 +24,8 @@ class NurseryMarkerModel {
     return NurseryMarkerModel(
       id: doc.id,
       nurseryName: data['nurseryName'] as String? ?? 'Unknown Nursery',
-      latitude: (data['latitude'] as num?)?.toDouble() ?? 18.5204,
-      longitude: (data['longitude'] as num?)?.toDouble() ?? 73.8567,
+      latitude: (data['latitude'] as num?)?.toDouble() ?? 20.7002,
+      longitude: (data['longitude'] as num?)?.toDouble() ?? 77.0082,
       address: data['address'] as String? ?? '',
       phone: data['phone'] as String? ?? '',
       imageUrl: data['imageUrl'] as String? ?? '',

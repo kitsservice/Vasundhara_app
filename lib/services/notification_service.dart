@@ -98,6 +98,39 @@ class NotificationService {
     );
   }
 
+  Future<void> scheduleMonthlyPledgeReminder(int targetTrees) async {
+    final tz.TZDateTime now = tz.TZDateTime.now(tz.local);
+    
+    // Handle month overflow correctly (e.g. month 12 -> next year month 1)
+    int nextMonth = now.month + 1;
+    int nextYear = now.year;
+    if (nextMonth > 12) {
+      nextMonth = 1;
+      nextYear++;
+    }
+    
+    final tz.TZDateTime scheduledDate = tz.TZDateTime(
+      tz.local, 
+      nextYear, 
+      nextMonth, 
+      now.day, 
+      now.hour, 
+      now.minute,
+    );
+
+    await _flutterLocalNotificationsPlugin.zonedSchedule(
+      103, // Unique ID for pledge reminder
+      'Pledge Reminder: $targetTrees Trees! 🌱',
+      'You pledged to plant $targetTrees trees. How is your progress coming along? Log your new trees today!',
+      scheduledDate,
+      _buildNotificationDetails(),
+      androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+      uiLocalNotificationDateInterpretation:
+          UILocalNotificationDateInterpretation.absoluteTime,
+      matchDateTimeComponents: DateTimeComponents.dayOfMonthAndTime,
+    );
+  }
+
   Future<void> showDemoNotification() async {
     await _flutterLocalNotificationsPlugin.show(
       999,

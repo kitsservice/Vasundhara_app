@@ -7,10 +7,11 @@ import '../providers/auth_provider.dart';
 import '../theme/app_colors.dart';
 import 'admin_stats_view.dart';
 import 'admin_campaign_view.dart';
-import 'admin_moderation_view.dart';
+import 'admin_users_management_screen.dart';
 import 'admin_settings_view.dart';
 import 'admin_nursery_registration_sheet.dart';
 import 'admin_nurseries_list_screen.dart';
+import 'admin_communities_view.dart';
 
 class AdminDashboardScreen extends StatefulWidget {
   const AdminDashboardScreen({super.key});
@@ -25,10 +26,11 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
 
   final List<Widget> _views = [
     const AdminStatsView(), // Dashboard
-    const AdminModerationView(), // Users (Mock routing to moderation for now)
+    const AdminUsersManagementScreen(), // Users
     const SizedBox(), // Add (Handled by FAB)
     const AdminCampaignView(), // Campaigns
     const AdminSettingsView(), // Settings
+    const AdminCommunitiesView(), // Communities
   ];
 
   void _showNotifications() {
@@ -66,8 +68,8 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
             Expanded(
               child: StreamBuilder<QuerySnapshot>(
                 stream: FirebaseFirestore.instance
-                    .collection('planted_trees')
-                    .orderBy('plantedAt', descending: true)
+                    .collection('admin_notifications')
+                    .orderBy('createdAt', descending: true)
                     .limit(20)
                     .snapshots(),
                 builder: (context, snapshot) {
@@ -92,13 +94,12 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                       final data = snapshot.data!.docs[index].data()
                           as Map<String, dynamic>;
                       final userName = data['userName'] ?? 'Unknown User';
-                      final quantity = data['quantity'] ?? 1;
-                      final type = data['treeType'] ?? 'Tree';
-
+                      final type = data['type'] ?? 'tree_planted';
+                      
                       String timeStr = 'Just now';
-                      if (data['plantedAt'] != null) {
+                      if (data['createdAt'] != null) {
                         final DateTime date =
-                            (data['plantedAt'] as Timestamp).toDate();
+                            (data['createdAt'] as Timestamp).toDate();
                         final diff = DateTime.now().difference(date);
                         if (diff.inMinutes < 60) {
                           timeStr = '${diff.inMinutes} min ago';
@@ -109,18 +110,69 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                         }
                       }
 
+                      IconData icon = CupertinoIcons.tree;
+                      Color iconBg = AppColors.primary.withValues(alpha: 0.1);
+                      Color iconColor = AppColors.primary;
+                      String verb = ' successfully planted ';
+                      String object = '${data['quantity'] ?? 1} trees';
+                      Color objectColor = AppColors.primary;
+
+                      if (type == 'donation_request') {
+                        icon = CupertinoIcons.gift_fill;
+                        iconBg = AppColors.secondary.withValues(alpha: 0.1);
+                        iconColor = AppColors.secondary;
+                        verb = ' submitted a new ';
+                        object = 'Donation Request';
+                        objectColor = AppColors.secondary;
+                      } else if (type == 'growth_update_uploaded') {
+                        icon = CupertinoIcons.photo_camera_solid;
+                        iconBg = Colors.blue.withValues(alpha: 0.1);
+                        iconColor = Colors.blue.shade700;
+                        verb = ' uploaded a ';
+                        object = '6-Month Growth Photo';
+                        objectColor = Colors.blue.shade700;
+                      } else if (type == 'badge_unlocked') {
+                        icon = CupertinoIcons.rosette;
+                        iconBg = Colors.orange.withValues(alpha: 0.1);
+                        iconColor = Colors.orange.shade800;
+                        verb = ' unlocked the ';
+                        object = '${data['badgeId'] ?? ''} Badge';
+                        objectColor = Colors.orange.shade800;
+                      } else if (type == 'site_suggested') {
+                        icon = CupertinoIcons.map_pin_ellipse;
+                        iconBg = Colors.purple.withValues(alpha: 0.1);
+                        iconColor = Colors.purple.shade700;
+                        verb = ' suggested a new ';
+                        object = 'Planting Site';
+                        objectColor = Colors.purple.shade700;
+                      } else if (type == 'nursery_registered') {
+                        icon = CupertinoIcons.house_fill;
+                        iconBg = Colors.teal.withValues(alpha: 0.1);
+                        iconColor = Colors.teal.shade800;
+                        verb = ' registered a new ';
+                        object = 'Partner Nursery';
+                        objectColor = Colors.teal.shade800;
+                      } else if (type == 'community_joined') {
+                        icon = CupertinoIcons.person_3_fill;
+                        iconBg = Colors.indigo.withValues(alpha: 0.1);
+                        iconColor = Colors.indigo.shade700;
+                        verb = ' joined the community: ';
+                        object = '${data['communityName'] ?? 'Unknown'}';
+                        objectColor = Colors.indigo.shade700;
+                      }
+
                       return Row(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Container(
                             padding: const EdgeInsets.all(10),
                             decoration: BoxDecoration(
-                              color: AppColors.primary.withValues(alpha: 0.1),
+                              color: iconBg,
                               shape: BoxShape.circle,
                             ),
-                            child: const Icon(
-                              CupertinoIcons.tree,
-                              color: AppColors.primary,
+                            child: Icon(
+                              icon,
+                              color: iconColor,
                               size: 20,
                             ),
                           ),
@@ -142,14 +194,14 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                                           fontWeight: FontWeight.bold,
                                         ),
                                       ),
-                                      const TextSpan(
-                                        text: ' successfully planted ',
+                                      TextSpan(
+                                        text: verb,
                                       ),
                                       TextSpan(
-                                        text: '$quantity $type',
-                                        style: const TextStyle(
+                                        text: object,
+                                        style: TextStyle(
                                           fontWeight: FontWeight.bold,
-                                          color: AppColors.primary,
+                                          color: objectColor,
                                         ),
                                       ),
                                       const TextSpan(text: '!'),
@@ -257,7 +309,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                             children: [
                               IconButton(
                                 icon: const Icon(
-                                  CupertinoIcons.tree,
+                                  Icons.storefront,
                                   color: Colors.white,
                                   size: 26,
                                 ),
@@ -281,17 +333,29 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                                     ),
                                     onPressed: _showNotifications,
                                   ),
-                                  Positioned(
-                                    right: 10,
-                                    top: 10,
-                                    child: Container(
-                                      width: 10,
-                                      height: 10,
-                                      decoration: const BoxDecoration(
-                                        color: Colors.redAccent,
-                                        shape: BoxShape.circle,
-                                      ),
-                                    ),
+                                  StreamBuilder<QuerySnapshot>(
+                                    stream: FirebaseFirestore.instance
+                                        .collection('admin_notifications')
+                                        .where('isRead', isEqualTo: false)
+                                        .limit(1)
+                                        .snapshots(),
+                                    builder: (context, snapshot) {
+                                      if (snapshot.hasData && snapshot.data!.docs.isNotEmpty) {
+                                        return Positioned(
+                                          right: 10,
+                                          top: 10,
+                                          child: Container(
+                                            width: 10,
+                                            height: 10,
+                                            decoration: const BoxDecoration(
+                                              color: Colors.redAccent,
+                                              shape: BoxShape.circle,
+                                            ),
+                                          ),
+                                        );
+                                      }
+                                      return const SizedBox.shrink();
+                                    },
                                   ),
                                 ],
                               ),
@@ -356,15 +420,17 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              _buildNavItem(
-                CupertinoIcons.square_grid_2x2_fill,
-                'Dashboard',
-                0,
+              Expanded(
+                child: _buildNavItem(
+                  CupertinoIcons.square_grid_2x2_fill,
+                  'Dashboard',
+                  0,
+                ),
               ),
-              _buildNavItem(CupertinoIcons.person_3, 'Users', 1),
+              Expanded(child: _buildNavItem(CupertinoIcons.person_3, 'Users', 1)),
               const SizedBox(width: 48), // Space for FAB
-              _buildNavItem(CupertinoIcons.speaker_3, 'Campaigns', 3),
-              _buildNavItem(CupertinoIcons.settings, 'Settings', 4),
+              Expanded(child: _buildNavItem(CupertinoIcons.speaker_3, 'Campaigns', 3)),
+              Expanded(child: _buildNavItem(CupertinoIcons.settings, 'Settings', 4)),
             ],
           ),
         ),
@@ -383,23 +449,24 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
         });
       },
       behavior: HitTestBehavior.opaque,
-      child: SizedBox(
-        width: 70,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(icon, color: color, size: 24),
-            const SizedBox(height: 4),
-            Text(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, color: color, size: 24),
+          const SizedBox(height: 4),
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Text(
               label,
+              maxLines: 1,
               style: GoogleFonts.inter(
                 color: color,
                 fontSize: 10,
                 fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
               ),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
@@ -497,6 +564,22 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
               Navigator.pop(context);
               setState(() {
                 _currentIndex = 4;
+              });
+            },
+          ),
+          ListTile(
+            leading: const Icon(
+              Icons.apartment,
+              color: AppColors.textPrimary,
+            ),
+            title: Text(
+              'Communities',
+              style: GoogleFonts.inter(fontWeight: FontWeight.w600),
+            ),
+            onTap: () {
+              Navigator.pop(context);
+              setState(() {
+                _currentIndex = 5;
               });
             },
           ),

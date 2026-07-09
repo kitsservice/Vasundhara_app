@@ -3,7 +3,7 @@ import 'package:flutter/cupertino.dart';
 import '../../theme/app_colors.dart';
 import 'home_screen.dart';
 import 'profile_screen.dart';
-import '../ola_map_screen.dart';
+import '../map/map_screen.dart';
 import '../map/nursery_screen.dart';
 import '../gamification/my_forest_screen.dart';
 
@@ -19,7 +19,7 @@ class _MainNavigationState extends State<MainNavigation> {
   // Track which tabs have been visited for lazy initialization
   final Set<int> _visitedIndices = {0};
 
-  Widget get _mapTab => const OlaMapScreen();
+  Widget get _mapTab => const MapScreen();
 
   late final List<Widget> _screens = [
     const HomeScreen(),

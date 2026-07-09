@@ -1,11 +1,10 @@
 import 'dart:io';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-import 'package:flutter/foundation.dart';
 
 class CloudinaryService {
-  static const String cloudName = 'Vasundhara';
-  static const String uploadPreset = 'zkwvuhu8';
+  static const String cloudName = 'ozllvd6a';
+  static const String uploadPreset = 'Vasundhara-preset';
 
   /// Uploads an image file to Cloudinary and returns the secure URL
   static Future<String?> uploadImage(File imageFile) async {

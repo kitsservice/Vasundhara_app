@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../providers/settings_provider.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -15,7 +15,6 @@ class HomeHeroBackground extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isMarathi = context.watch<SettingsProvider>().isMarathi;
     final userProvider = context.watch<UserProvider>();
 
     return SliverToBoxAdapter(
@@ -64,9 +63,7 @@ class HomeHeroBackground extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  isMarathi
-                      ? 'आज लावा,\nउद्या सुरक्षित करा'
-                      : 'Plant Today,\nProtect Tomorrow',
+                  'ui_key_157'.tr(),
                   style: GoogleFonts.outfit(
                     fontSize: 36,
                     fontWeight: FontWeight.w900,
@@ -86,91 +83,58 @@ class HomeHeroBackground extends StatelessWidget {
                         fontWeight: FontWeight.w600,
                         height: 1.5,
                       ),
-                      children: isMarathi
-                          ? [
-                              const TextSpan(
-                                text:
-                                    'या चळवळीत सामील व्हा. अधिक झाडे लावा आणि आपल्या ग्रहाला ',
+                      children: () {
+                        final code = context.locale.languageCode;
+                        String prefixText = 'Join the movement. Plant more trees and make our ';
+                        String highlightText = 'planet greener.';
+                        
+                        if (code == 'mr') {
+                          prefixText = 'या चळवळीत सामील व्हा. अधिक झाडे लावा आणि आपल्या ग्रहाला ';
+                          highlightText = 'हिरवेगार बनवा.';
+                        } else if (code == 'hi') {
+                          prefixText = 'इस अभियान में शामिल हों। अधिक पेड़ लगाएं और हमारे ग्रह को ';
+                          highlightText = 'हरा-भरा बनाएं।';
+                        }
+                        
+                        return [
+                          TextSpan(text: prefixText),
+                          WidgetSpan(
+                            alignment: PlaceholderAlignment.middle,
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                                vertical: 2,
                               ),
-                              WidgetSpan(
-                                alignment: PlaceholderAlignment.middle,
-                                child: Container(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 8,
-                                    vertical: 2,
+                              decoration: BoxDecoration(
+                                gradient: const LinearGradient(
+                                  colors: [
+                                    Color(0xFF10B981),
+                                    Color(0xFF047857),
+                                  ],
+                                  begin: Alignment.topLeft,
+                                  end: Alignment.bottomRight,
+                                ),
+                                borderRadius: BorderRadius.circular(8),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: const Color(0xFF10B981).withValues(alpha: 0.3),
+                                    blurRadius: 4,
+                                    offset: const Offset(0, 2),
                                   ),
-                                  decoration: BoxDecoration(
-                                    gradient: const LinearGradient(
-                                      colors: [
-                                        Color(0xFF10B981),
-                                        Color(0xFF047857),
-                                      ],
-                                      begin: Alignment.topLeft,
-                                      end: Alignment.bottomRight,
-                                    ),
-                                    borderRadius: BorderRadius.circular(8),
-                                    boxShadow: [
-                                      BoxShadow(
-                                        color: const Color(0xFF10B981)
-                                            .withValues(alpha: 0.3),
-                                        blurRadius: 4,
-                                        offset: const Offset(0, 2),
-                                      ),
-                                    ],
-                                  ),
-                                  child: Text(
-                                    'हिरवेगार बनवा.',
-                                    style: GoogleFonts.inter(
-                                      color: Colors.white,
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 13,
-                                    ),
-                                  ),
+                                ],
+                              ),
+                              child: Text(
+                                highlightText,
+                                style: GoogleFonts.inter(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 13,
                                 ),
                               ),
-                            ]
-                          : [
-                              const TextSpan(
-                                text:
-                                    'Join the movement. Plant more trees and make our ',
-                              ),
-                              WidgetSpan(
-                                alignment: PlaceholderAlignment.middle,
-                                child: Container(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 8,
-                                    vertical: 2,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    gradient: const LinearGradient(
-                                      colors: [
-                                        Color(0xFF10B981),
-                                        Color(0xFF047857),
-                                      ],
-                                      begin: Alignment.topLeft,
-                                      end: Alignment.bottomRight,
-                                    ),
-                                    borderRadius: BorderRadius.circular(8),
-                                    boxShadow: [
-                                      BoxShadow(
-                                        color: const Color(0xFF10B981)
-                                            .withValues(alpha: 0.3),
-                                        blurRadius: 4,
-                                        offset: const Offset(0, 2),
-                                      ),
-                                    ],
-                                  ),
-                                  child: Text(
-                                    'planet greener.',
-                                    style: GoogleFonts.inter(
-                                      color: Colors.white,
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 13,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ],
+                            ),
+                          ),
+                        ];
+                      }(),
                     ),
                   ),
                 ),
@@ -202,7 +166,7 @@ class HomeHeroBackground extends StatelessWidget {
                     _StatItem(
                       icon: Icons.eco,
                       value: userProvider.totalTreesPlanted.toString(),
-                      label: isMarathi ? 'झाडे लावली' : 'Trees Planted',
+                      label: tr('ui_key_158'),
                       iconColor: const Color(0xFF10B981),
                     ),
                     Container(
@@ -213,7 +177,7 @@ class HomeHeroBackground extends StatelessWidget {
                     _StatItem(
                       icon: Icons.park,
                       value: userProvider.totalTreesSurvived.toString(),
-                      label: isMarathi ? 'झाडे जगली' : 'Trees Survived',
+                      label: tr('ui_key_159'),
                       iconColor: const Color(0xFF047857),
                     ),
                     Container(
@@ -224,7 +188,7 @@ class HomeHeroBackground extends StatelessWidget {
                     _StatItem(
                       icon: CupertinoIcons.location_solid,
                       value: userProvider.totalLocations.toString(),
-                      label: isMarathi ? 'ठिकाणे' : 'Locations',
+                      label: tr('ui_key_160'),
                       iconColor: const Color(0xFF6B7280),
                     ),
                   ],
@@ -247,7 +211,7 @@ class HomeHeroBackground extends StatelessWidget {
                       color: Colors.white,
                     ),
                     label: Text(
-                      isMarathi ? 'झाड लावा' : 'Plant a Tree',
+                      tr('ui_key_161'),
                       style: GoogleFonts.inter(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,

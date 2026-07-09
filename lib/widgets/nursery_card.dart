@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/cupertino.dart';
 import '../../theme/app_colors.dart';
 
@@ -169,7 +170,7 @@ class NurseryCard extends StatelessWidget {
                         ),
                       ),
                       child: Text(
-                        isMarathi ? 'संपर्क साधा' : 'Contact Us',
+                        'ui_key_162'.tr(),
                         style: const TextStyle(
                           color: Colors.white,
                           fontWeight: FontWeight.bold,
@@ -184,6 +185,6 @@ class NurseryCard extends StatelessWidget {
           ),
         ],
       ),
-    ));
+    ),);
   }
 }

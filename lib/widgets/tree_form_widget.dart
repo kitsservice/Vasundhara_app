@@ -1,8 +1,7 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
-import '../providers/settings_provider.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/cupertino.dart';
-import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:geolocator/geolocator.dart';
@@ -33,7 +32,7 @@ class _TreeFormWidgetState extends State<TreeFormWidget>
   final TextEditingController _locationController = TextEditingController();
   double? _pickedLat;
   double? _pickedLon;
-  File? _selectedImage;
+  final List<File> _selectedImages = [];
   bool _isSubmitting = false;
   bool _isAutoFetching = false;
 
@@ -56,7 +55,7 @@ class _TreeFormWidgetState extends State<TreeFormWidget>
   Future<void> _autoFetchLocation() async {
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       if (!mounted) return;
-      final isMarathi = context.read<SettingsProvider>().isMarathi;
+      final isMarathi = context.locale.languageCode == 'mr';
       setState(() {
         _isAutoFetching = true;
         _locationController.text =
@@ -150,18 +149,29 @@ class _TreeFormWidgetState extends State<TreeFormWidget>
   }
 
   Future<void> _pickImage() async {
+    if (_selectedImages.length >= _quantity) {
+      final isMarathi = context.locale.languageCode == 'mr';
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(isMarathi 
+              ? 'तुम्ही जास्तीत जास्त $_quantity फोटो जोडू शकता.' 
+              : 'You can only add up to $_quantity photos.',),
+        ),
+      );
+      return;
+    }
     final picker = ImagePicker();
     final pickedFile = await picker.pickImage(source: ImageSource.camera);
     if (pickedFile != null) {
       setState(() {
-        _selectedImage = File(pickedFile.path);
+        _selectedImages.add(File(pickedFile.path));
       });
     }
   }
 
   void _showStrictLocationWarning() {
     if (!mounted) return;
-    final isMarathi = context.read<SettingsProvider>().isMarathi;
+    final isMarathi = context.locale.languageCode == 'mr';
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -194,8 +204,23 @@ class _TreeFormWidgetState extends State<TreeFormWidget>
             ),
           ),
           ElevatedButton(
-            onPressed: () {
+            onPressed: () async {
               Navigator.pop(context);
+              
+              // Check if service is disabled, open location settings if so
+              final bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
+              if (!serviceEnabled) {
+                await Geolocator.openLocationSettings();
+              } else {
+                // If service is enabled but permissions are denied, open app settings
+                final LocationPermission permission = await Geolocator.checkPermission();
+                if (permission == LocationPermission.denied || permission == LocationPermission.deniedForever) {
+                  await Geolocator.openAppSettings();
+                }
+              }
+              
+              // Wait a moment for user to potentially return from settings
+              await Future.delayed(const Duration(milliseconds: 500));
               _autoFetchLocation(); // Retry fetching
             },
             style: ElevatedButton.styleFrom(
@@ -241,7 +266,7 @@ class _TreeFormWidgetState extends State<TreeFormWidget>
   }
 
   Future<void> _submitForm() async {
-    final isMarathi = context.read<SettingsProvider>().isMarathi;
+    final isMarathi = context.locale.languageCode == 'mr';
     if (_treeNameController.text.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -266,13 +291,13 @@ class _TreeFormWidgetState extends State<TreeFormWidget>
       );
       return;
     }
-    if (_selectedImage == null) {
+    if (_selectedImages.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
             isMarathi
-                ? 'कृपया झाडाचा फोटो जोडा.'
-                : 'Please add a photo of the tree.',
+                ? 'कृपया झाडाचा किमान एक फोटो जोडा.'
+                : 'Please add at least one photo of the tree.',
           ),
         ),
       );
@@ -307,9 +332,14 @@ class _TreeFormWidgetState extends State<TreeFormWidget>
       }
     }
 
-    String? imageUrl;
-    if (_selectedImage != null) {
-      imageUrl = await CloudinaryService.uploadImage(_selectedImage!);
+    final List<String> uploadedUrls = [];
+    if (_selectedImages.isNotEmpty) {
+      for (var file in _selectedImages) {
+        final String? url = await CloudinaryService.uploadImage(file);
+        if (url != null) {
+          uploadedUrls.add(url);
+        }
+      }
     }
 
     if (!mounted) return;
@@ -320,7 +350,8 @@ class _TreeFormWidgetState extends State<TreeFormWidget>
         datePlanted: _selectedDate,
         location: _locationController.text.trim(),
         quantity: _quantity,
-        imageUrl: imageUrl,
+        imageUrl: uploadedUrls.isNotEmpty ? uploadedUrls.first : null,
+        imageUrls: uploadedUrls.isNotEmpty ? uploadedUrls : null,
         latitude: lat,
         longitude: lng,
       ),
@@ -385,41 +416,62 @@ class _TreeFormWidgetState extends State<TreeFormWidget>
 
   @override
   Widget build(BuildContext context) {
-    final isMarathi = context.watch<SettingsProvider>().isMarathi;
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(20.0),
-      child: Container(
-        padding: const EdgeInsets.all(24),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(24),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.04),
-              blurRadius: 24,
-              offset: const Offset(0, 10),
+    final isMarathi = context.locale.languageCode == 'mr';
+    return Column(
+      children: [
+        Expanded(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(20.0),
+            child: Container(
+              padding: const EdgeInsets.all(24),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(24),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.04),
+                    blurRadius: 24,
+                    offset: const Offset(0, 10),
+                  ),
+                ],
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _buildTreeNameSection(isMarathi),
+                  const SizedBox(height: 28),
+                  _buildQuantitySection(isMarathi),
+                  const SizedBox(height: 28),
+                  _buildDateSection(isMarathi),
+                  const SizedBox(height: 28),
+                  _buildLocationSection(isMarathi),
+                  const SizedBox(height: 28),
+                  _buildPhotoUploadSection(isMarathi),
+                  const SizedBox(height: 32),
+                  _buildTrackingNotice(isMarathi),
+                ],
+              ),
             ),
-          ],
+          ),
         ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _buildTreeNameSection(isMarathi),
-            const SizedBox(height: 28),
-            _buildQuantitySection(isMarathi),
-            const SizedBox(height: 28),
-            _buildDateSection(isMarathi),
-            const SizedBox(height: 28),
-            _buildLocationSection(isMarathi),
-            const SizedBox(height: 28),
-            _buildPhotoUploadSection(isMarathi),
-            const SizedBox(height: 32),
-            _buildTrackingNotice(isMarathi),
-            const SizedBox(height: 40),
-            _buildSubmitButton(isMarathi),
-          ],
+        Container(
+          padding: const EdgeInsets.only(top: 20, left: 20, right: 20, bottom: 20),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.05),
+                blurRadius: 10,
+                offset: const Offset(0, -5),
+              ),
+            ],
+          ),
+          child: SafeArea(
+            top: false,
+            child: _buildSubmitButton(isMarathi),
+          ),
         ),
-      ),
+      ],
     );
   }
 
@@ -656,7 +708,7 @@ class _TreeFormWidgetState extends State<TreeFormWidget>
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          isMarathi ? 'झाडाचा फोटो जोडा' : 'Add a Photo of the Tree',
+          isMarathi ? 'झाडाचे फोटो जोडा ($_quantity पर्यंत)' : 'Add Photos of the Trees (Up to $_quantity)',
           style: GoogleFonts.outfit(
             fontSize: 15,
             fontWeight: FontWeight.w600,
@@ -664,81 +716,70 @@ class _TreeFormWidgetState extends State<TreeFormWidget>
           ),
         ),
         const SizedBox(height: 10),
-        GestureDetector(
-          onTap: _pickImage,
-          child: Container(
-            height: 160,
-            width: double.infinity,
-            decoration: BoxDecoration(
-              color: _selectedImage == null
-                  ? const Color(0xFFF3F4F6)
-                  : Colors.black,
-              borderRadius: BorderRadius.circular(20),
-              image: _selectedImage != null
-                  ? DecorationImage(
-                      image: FileImage(_selectedImage!),
-                      fit: BoxFit.cover,
-                    )
-                  : null,
-            ),
-            child: _selectedImage == null
-                ? Column(
+        Wrap(
+          spacing: 12,
+          runSpacing: 12,
+          children: [
+            ..._selectedImages.asMap().entries.map((entry) {
+              final int idx = entry.key;
+              final File file = entry.value;
+              return Container(
+                height: 100,
+                width: 100,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(16),
+                  image: DecorationImage(image: FileImage(file), fit: BoxFit.cover),
+                ),
+                child: Align(
+                  alignment: Alignment.topRight,
+                  child: GestureDetector(
+                    onTap: () => setState(() => _selectedImages.removeAt(idx)),
+                    child: Container(
+                      margin: const EdgeInsets.all(6),
+                      padding: const EdgeInsets.all(4),
+                      decoration: const BoxDecoration(
+                        color: Colors.black54,
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(Icons.close, color: Colors.white, size: 16),
+                    ),
+                  ),
+                ),
+              );
+            }),
+            ...List.generate(_quantity - _selectedImages.length, (index) {
+              return GestureDetector(
+                onTap: _pickImage,
+                child: Container(
+                  height: 100,
+                  width: 100,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF3F4F6),
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(
+                      color: Colors.grey.shade300,
+                      width: 2,
+                    ),
+                  ),
+                  child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Container(
-                        padding: const EdgeInsets.all(16),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          shape: BoxShape.circle,
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withValues(alpha: 0.05),
-                              blurRadius: 10,
-                              offset: const Offset(0, 4),
-                            ),
-                          ],
-                        ),
-                        child: const Icon(
-                          CupertinoIcons.camera_fill,
-                          size: 32,
-                          color: AppColors.primary,
-                        ),
-                      ),
-                      const SizedBox(height: 12),
+                      const Icon(CupertinoIcons.camera_fill, color: AppColors.primary, size: 28),
+                      const SizedBox(height: 4),
                       Text(
-                        isMarathi
-                            ? 'फोटो काढण्यासाठी टॅप करा'
-                            : 'Tap to take a live photo',
+                        isMarathi ? 'फोटो जोडा' : 'Add Photo',
                         style: GoogleFonts.inter(
                           color: AppColors.textSecondary,
                           fontWeight: FontWeight.w500,
-                          fontSize: 14,
+                          fontSize: 12,
                         ),
                       ),
                     ],
-                  )
-                : Align(
-                    alignment: Alignment.topRight,
-                    child: Padding(
-                      padding: const EdgeInsets.all(12.0),
-                      child: GestureDetector(
-                        onTap: () => setState(() => _selectedImage = null),
-                        child: Container(
-                          padding: const EdgeInsets.all(6),
-                          decoration: BoxDecoration(
-                            color: Colors.black.withValues(alpha: 0.6),
-                            shape: BoxShape.circle,
-                          ),
-                          child: const Icon(
-                            Icons.close,
-                            size: 20,
-                            color: Colors.white,
-                          ),
-                        ),
-                      ),
-                    ),
                   ),
-          ),
+                ),
+              );
+            }),
+          ],
         ),
       ],
     );
@@ -788,10 +829,10 @@ class _TreeFormWidgetState extends State<TreeFormWidget>
   Widget _buildSubmitButton(bool isMarathi) {
     return SizedBox(
       width: double.infinity,
-      height: 56,
       child: ElevatedButton(
         onPressed: _isSubmitting ? null : _submitForm,
         style: ElevatedButton.styleFrom(
+          padding: const EdgeInsets.symmetric(vertical: 16),
           backgroundColor: AppColors.primary,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),

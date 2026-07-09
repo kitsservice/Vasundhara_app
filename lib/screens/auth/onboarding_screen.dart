@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../providers/settings_provider.dart';
-import 'package:provider/provider.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:smooth_page_indicator/smooth_page_indicator.dart';
 import 'package:flutter/cupertino.dart';
 import '../../theme/app_colors.dart';
@@ -21,43 +20,31 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
   List<Map<String, String>> getOnboardingData(bool isMarathi) => [
         {
-          'title': isMarathi
-              ? 'अधिक झाडे लावा, उत्तम जीवन जगा'
-              : 'Plant More, Live Better',
+          'title': 'ui_key_1'.tr(),
           'subtitle': isMarathi
               ? 'चला आपल्या पृथ्वीचा प्रत्येक कोपरा हिरवागार आणि सुंदर बनवूया.'
               : "Let's make every corner of our earth green and beautiful.",
           'image': 'assets/images/onboarding_1.png',
-          'button': isMarathi ? 'सुरु करा' : 'Get Started',
+          'button': 'ui_key_2'.tr(),
         },
         {
-          'title': isMarathi
-              ? 'वसुंधरा मध्ये आपले स्वागत आहे'
-              : 'Welcome to Vasundhara',
-          'subtitle': isMarathi
-              ? 'एकत्रितपणे आपण एक हरित ग्रह बनवू शकतो.'
-              : 'Together we can make a greener planet.',
+          'title': 'ui_key_3'.tr(),
+          'subtitle': 'ui_key_4'.tr(),
           'image': 'assets/images/onboarding_2.png',
-          'button': isMarathi ? 'पुढे' : 'Next',
+          'button': 'ui_key_5'.tr(),
         },
         {
-          'title': isMarathi
-              ? 'तुमच्या हरित प्रभावाचा मागोवा घ्या'
-              : 'Track Your Green Impact',
-          'subtitle': isMarathi
-              ? 'तुम्ही लावलेल्या झाडांचे आणि त्यांच्या वाढीचे निरीक्षण करा.'
-              : 'Monitor your planted trees and their growth.',
+          'title': 'ui_key_6'.tr(),
+          'subtitle': 'ui_key_7'.tr(),
           'image': 'assets/images/onboarding_3.png',
-          'button': isMarathi ? 'पुढे' : 'Next',
+          'button': 'ui_key_8'.tr(),
         },
         {
           'title':
-              isMarathi ? 'निसर्गासाठी शपथ घ्या' : 'Take a Pledge for Nature',
-          'subtitle': isMarathi
-              ? 'आजच शपथ घ्या आणि इतरांनाही तसे करण्यास प्रेरित करा.'
-              : 'Pledge today and inspire others to do the same.',
+              'ui_key_9'.tr(),
+          'subtitle': 'ui_key_10'.tr(),
           'image': 'assets/images/onboarding_4.png',
-          'button': isMarathi ? 'आता सुरु करा' : 'Start Now',
+          'button': 'ui_key_11'.tr(),
         },
       ];
 
@@ -81,7 +68,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final isMarathi = context.watch<SettingsProvider>().isMarathi;
+    final isMarathi = context.locale.languageCode == 'mr';
     return Scaffold(
       backgroundColor: Colors.white,
       body: Stack(
@@ -123,7 +110,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                             ),
                           ),
                           Text(
-                            isMarathi ? 'वृक्षारोपण' : 'Tree Plantation',
+                            'ui_key_12'.tr(),
                             style: GoogleFonts.inter(
                               fontSize: 14,
                               color: AppColors.textSecondary,
@@ -134,7 +121,15 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                       ),
                       TextButton.icon(
                         onPressed: () {
-                          context.read<SettingsProvider>().toggleLanguage();
+                          final code = context.locale.languageCode;
+if (code == 'en') {
+  context.setLocale(const Locale('mr'));
+} else if (code == 'mr') {
+  context.setLocale(const Locale('hi'));
+} else {
+  context.setLocale(const Locale('en'));
+}
+
                         },
                         icon: const Icon(
                           CupertinoIcons.globe,
@@ -142,7 +137,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                           color: AppColors.primary,
                         ),
                         label: Text(
-                          isMarathi ? 'EN' : 'MR',
+                          context.locale.languageCode.toUpperCase(),
                           style: GoogleFonts.inter(
                             fontWeight: FontWeight.bold,
                             color: AppColors.primary,
@@ -270,8 +265,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                           ),
                           child: Text(
                             isLastPage
-                                ? (isMarathi ? 'सुरु करा' : 'Get Started')
-                                : (isMarathi ? 'पुढे' : 'Next'),
+                                ? ('ui_key_14'.tr())
+                                : ('ui_key_15'.tr()),
                             style: GoogleFonts.inter(
                               fontSize: 18,
                               fontWeight: FontWeight.bold,
@@ -288,7 +283,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                             ? TextButton(
                                 onPressed: _goToHome,
                                 child: Text(
-                                  isMarathi ? 'वगळा' : 'Skip',
+                                  'ui_key_16'.tr(),
                                   style: GoogleFonts.inter(
                                     color: AppColors.textSecondary,
                                     fontWeight: FontWeight.bold,

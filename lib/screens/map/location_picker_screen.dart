@@ -1,5 +1,4 @@
 import 'dart:convert';
-import '../../core/constants/api_keys.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter_map/flutter_map.dart';
@@ -7,8 +6,7 @@ import 'package:latlong2/latlong.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:http/http.dart' as http;
 import 'package:location/location.dart' as loc;
-import 'package:provider/provider.dart';
-import '../../providers/settings_provider.dart';
+import 'package:easy_localization/easy_localization.dart';
 import '../../theme/app_colors.dart';
 
 class LocationPickerScreen extends StatefulWidget {
@@ -74,7 +72,7 @@ class _LocationPickerScreenState extends State<LocationPickerScreen> {
       serviceEnabled = await location.requestService();
       if (!serviceEnabled) {
         if (mounted) {
-          final isMarathi = context.read<SettingsProvider>().isMarathi;
+          final isMarathi = context.locale.languageCode == 'mr';
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(
@@ -155,7 +153,7 @@ class _LocationPickerScreenState extends State<LocationPickerScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final isMarathi = context.watch<SettingsProvider>().isMarathi;
+    final isMarathi = context.locale.languageCode == 'mr';
 
     return Scaffold(
       appBar: AppBar(
@@ -173,13 +171,12 @@ class _LocationPickerScreenState extends State<LocationPickerScreen> {
             mapController: _mapController,
             options: MapOptions(
               initialCenter:
-                  widget.initialLocation ?? const LatLng(18.5204, 73.8567),
+                  widget.initialLocation ?? const LatLng(20.7002, 77.0082),
               initialZoom: 15.0,
             ),
             children: [
               TileLayer(
-                urlTemplate:
-                    'https://api.olamaps.io/tiles/vector/v1/styles/default-light-standard/xyz/{z}/{x}/{y}.png?api_key=${ApiKeys.olaMapsApiKey}',
+                urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
                 userAgentPackageName: 'com.vasundhara.treeapp',
               ),
             ],

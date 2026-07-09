@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../providers/settings_provider.dart';
-import 'package:provider/provider.dart';
+import 'package:easy_localization/easy_localization.dart';
 import '../../theme/app_colors.dart';
 import '../../widgets/tree_form_widget.dart';
 
@@ -11,11 +10,10 @@ class PlantTreeScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isMarathi = context.watch<SettingsProvider>().isMarathi;
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
-        title: Text(isMarathi ? 'झाड लावा' : 'Plant a Tree'),
+        title: Text('ui_key_52'.tr()),
         backgroundColor: AppColors.background,
         elevation: 0,
       ),

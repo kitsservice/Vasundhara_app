@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -56,7 +57,7 @@ class ProgressSection extends StatelessWidget {
                   Row(
                     children: [
                       Text(
-                        isMarathi ? 'प्रगती' : 'Campaign Progress',
+                        'ui_key_154'.tr(),
                         style: GoogleFonts.outfit(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
@@ -108,14 +109,14 @@ class ProgressSection extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
-                    '$currentTrees ${isMarathi ? 'लावलेली झाडे' : 'Planted'}',
+                    '$currentTrees ${'ui_key_155'.tr()}',
                     style: const TextStyle(
                       color: AppColors.textSecondary,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
                   Text(
-                    '$targetTrees ${isMarathi ? 'ध्येय' : 'Goal'}',
+                    '$targetTrees ${'ui_key_156'.tr()}',
                     style: const TextStyle(
                       color: AppColors.textSecondary,
                       fontWeight: FontWeight.w600,

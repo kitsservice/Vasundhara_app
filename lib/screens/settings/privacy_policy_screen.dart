@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:provider/provider.dart';
-import '../../providers/settings_provider.dart';
 import '../../theme/app_colors.dart';
 
 class PrivacyPolicyScreen extends StatelessWidget {
@@ -10,8 +9,6 @@ class PrivacyPolicyScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isMarathi = context.watch<SettingsProvider>().isMarathi;
-
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
@@ -23,7 +20,7 @@ class PrivacyPolicyScreen extends StatelessWidget {
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(
-          isMarathi ? 'गोपनीयता धोरण' : 'Privacy Policy',
+          'ui_key_120'.tr(),
           style: GoogleFonts.outfit(
             color: AppColors.textPrimary,
             fontSize: 22,
@@ -37,9 +34,7 @@ class PrivacyPolicyScreen extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              isMarathi
-                  ? 'शेवटचे अद्यतनित: २६ जून २०२६'
-                  : 'Last Updated: June 26, 2026',
+              'ui_key_121'.tr(),
               style: GoogleFonts.inter(
                 color: AppColors.textSecondary,
                 fontSize: 14,
@@ -47,44 +42,24 @@ class PrivacyPolicyScreen extends StatelessWidget {
             ),
             const SizedBox(height: 24),
             _buildSection(
-              title: isMarathi
-                  ? '१. स्थान डेटा संकलन'
-                  : '1. Location Data Collection',
-              content: isMarathi
-                  ? 'जेव्हा तुम्ही झाड लावता तेव्हाच हे ॲप तुमचे अचूक GPS स्थान संकलित करते. हे ग्लोबल ट्री मॅपवर तुमचे झाड अचूकपणे पिन करण्यासाठी केले जाते. आम्ही पार्श्वभूमीत तुमच्या स्थानाचा मागोवा घेत नाही.'
-                  : 'This app collects your precise GPS location ONLY when you are actively submitting a tree plantation form. This is to accurately pin your tree on the Global Tree Map. We do NOT track your location in the background.',
+              title: 'ui_key_122'.tr(),
+              content: 'ui_key_123'.tr(),
             ),
             _buildSection(
-              title: isMarathi
-                  ? '२. कॅमेरा आणि फोटो प्रवेश'
-                  : '2. Camera and Photo Access',
-              content: isMarathi
-                  ? 'झाडांची लागवड आणि ६ महिन्यांच्या वाढीच्या अद्यतनांची पडताळणी करण्यासाठी आम्हाला कॅमेरा किंवा गॅलरी प्रवेश आवश्यक आहे. तुम्ही जाणीवपूर्वक निवडलेले आणि अपलोड केलेले फोटोच आम्ही ॲक्सेस करतो. आम्ही तुमचे संपूर्ण फोटो लायब्ररी स्कॅन करत नाही.'
-                  : 'We require camera or gallery access to verify tree plantations and track 6-month growth updates. We only access the specific photo you consciously choose and upload. We do NOT scan your entire photo library.',
+              title: 'ui_key_124'.tr(),
+              content: 'ui_key_125'.tr(),
             ),
             _buildSection(
-              title: isMarathi
-                  ? '३. वापरकर्ता खाती आणि प्रमाणीकरण'
-                  : '3. User Accounts & Authentication',
-              content: isMarathi
-                  ? 'आम्ही सुरक्षिततेसाठी Firebase द्वारे तुमचे नाव आणि ईमेल पत्ता संकलित करतो. ग्रीन गार्डियन्स लीडरबोर्डवर तुमचे नाव आणि "एकूण लावलेली झाडे" स्कोर इतर वापरकर्त्यांना सार्वजनिकरित्या दृश्यमान असेल.'
-                  : 'We collect your name and email address via Firebase for security. Your name and "Total Trees Planted" score will be publicly visible to other users on the Green Guardians Leaderboard.',
+              title: 'ui_key_126'.tr(),
+              content: 'ui_key_127'.tr(),
             ),
             _buildSection(
-              title: isMarathi
-                  ? '४. तृतीय-पक्ष सेवा प्रदाता'
-                  : '4. Third-Party Service Providers',
-              content: isMarathi
-                  ? 'आम्ही डेटाबेस होस्टिंग आणि सुरक्षित प्रमाणीकरणासाठी Google Firebase वापरतो आणि GPS कोऑर्डिनेट्स वाचनीय पत्त्यांमध्ये रूपांतरित करण्यासाठी OpenStreetMap (OSM) वापरतो.'
-                  : 'We utilize Google Firebase for database hosting and secure authentication, and OpenStreetMap (OSM) for converting GPS coordinates into readable addresses.',
+              title: 'ui_key_128'.tr(),
+              content: 'ui_key_129'.tr(),
             ),
             _buildSection(
-              title: isMarathi
-                  ? '५. डेटा हटवण्याचे धोरण'
-                  : '5. Data Deletion Policy',
-              content: isMarathi
-                  ? 'तुमचा हक्क आहे की तुम्ही कधीही तुमचे खाते, तुमचे GPS कोऑर्डिनेट्स आणि तुमचे झाडांचे फोटो आमच्या सर्व्हरवरून हटवण्याची विनंती करू शकता. यासाठी आमच्या सपोर्ट टीमशी संपर्क साधा.'
-                  : 'You have the right to request the complete deletion of your account, your GPS coordinates, and your tree photos from our servers at any time by contacting our support team.',
+              title: 'ui_key_130'.tr(),
+              content: 'ui_key_131'.tr(),
             ),
             const SizedBox(height: 40),
             Center(

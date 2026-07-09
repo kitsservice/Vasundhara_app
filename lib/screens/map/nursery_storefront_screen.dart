@@ -1,11 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'package:provider/provider.dart';
 import '../../theme/app_colors.dart';
-import '../../providers/settings_provider.dart';
 
 class NurseryStorefrontScreen extends StatelessWidget {
   final Map<String, dynamic> nurseryData;
@@ -23,9 +22,7 @@ class NurseryStorefrontScreen extends StatelessWidget {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            isMarathi
-                ? 'नर्सरीचा संपर्क क्रमांक उपलब्ध नाही.'
-                : 'Contact number not available for this nursery.',
+            'ui_key_92'.tr(),
           ),
         ),
       );
@@ -40,9 +37,7 @@ class NurseryStorefrontScreen extends StatelessWidget {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-              isMarathi
-                  ? 'कॉल करता आला नाही.'
-                  : 'Could not launch the phone dialer.',
+              'ui_key_93'.tr(),
             ),
           ),
         );
@@ -52,7 +47,7 @@ class NurseryStorefrontScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isMarathi = context.watch<SettingsProvider>().isMarathi;
+    final isMarathi = context.locale.languageCode == 'mr';
     final name = nurseryData['name_en'] ?? 'Unknown Nursery';
     final ownerName = nurseryData['ownerName'] ?? 'Unknown';
     final address = nurseryData['address'] ?? '';
@@ -64,7 +59,7 @@ class NurseryStorefrontScreen extends StatelessWidget {
         backgroundColor: AppColors.primary,
         icon: const Icon(CupertinoIcons.phone_fill, color: Colors.white),
         label: Text(
-          isMarathi ? 'संपर्क साधा' : 'Contact Nursery',
+          'ui_key_94'.tr(),
           style: GoogleFonts.inter(
             fontWeight: FontWeight.bold,
             color: Colors.white,
@@ -126,9 +121,7 @@ class NurseryStorefrontScreen extends StatelessWidget {
                             ),
                             const SizedBox(width: 4),
                             Text(
-                              isMarathi
-                                  ? 'मालक: $ownerName'
-                                  : 'Owner: $ownerName',
+                              ownerName,
                               style: GoogleFonts.inter(
                                 fontSize: 14,
                                 color: Colors.white70,
@@ -177,7 +170,7 @@ class NurseryStorefrontScreen extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    isMarathi ? 'उपलब्ध रोपे (कॅटलॉग)' : 'Available Saplings',
+                    'ui_key_96'.tr(),
                     style: GoogleFonts.outfit(
                       fontSize: 20,
                       fontWeight: FontWeight.bold,
@@ -209,7 +202,7 @@ class NurseryStorefrontScreen extends StatelessWidget {
                                     fontSize: 12,
                                   ),
                                 ),
-                              ))
+                              ),)
                           .toList(),
                     ),
                   ],
@@ -239,9 +232,7 @@ class NurseryStorefrontScreen extends StatelessWidget {
                 return SliverFillRemaining(
                   child: Center(
                     child: Text(
-                      isMarathi
-                          ? 'कॅटलॉग लोड करताना त्रुटी आली.'
-                          : 'Error loading catalog.',
+                      'ui_key_97'.tr(),
                       style: GoogleFonts.inter(color: AppColors.textSecondary),
                     ),
                   ),
@@ -266,9 +257,7 @@ class NurseryStorefrontScreen extends StatelessWidget {
                         ),
                         const SizedBox(height: 16),
                         Text(
-                          isMarathi
-                              ? 'सध्या कोणतीही रोपे उपलब्ध नाहीत.'
-                              : 'No saplings available currently.',
+                          'ui_key_98'.tr(),
                           style: GoogleFonts.outfit(
                             fontSize: 18,
                             fontWeight: FontWeight.bold,
@@ -277,9 +266,7 @@ class NurseryStorefrontScreen extends StatelessWidget {
                         ),
                         const SizedBox(height: 8),
                         Text(
-                          isMarathi
-                              ? 'कृपया नंतर पुन्हा तपासा.'
-                              : 'Please check back later.',
+                          'ui_key_99'.tr(),
                           style:
                               GoogleFonts.inter(color: AppColors.textSecondary),
                         ),

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_animate/flutter_animate.dart';
@@ -14,6 +15,22 @@ class LeaderboardPreview extends StatelessWidget {
     required this.leaderboard,
   });
 
+  IconData _getPrestigeIcon(List<String>? badges) {
+    if (badges == null || badges.isEmpty) return CupertinoIcons.tree;
+    if (badges.contains('green_philanthropist')) return CupertinoIcons.heart_solid;
+    if (badges.contains('caregiver')) return Icons.favorite;
+    if (badges.contains('botanist')) return Icons.local_florist;
+    return CupertinoIcons.tree;
+  }
+
+  Color _getPrestigeColor(List<String>? badges) {
+    if (badges == null || badges.isEmpty) return AppColors.primary;
+    if (badges.contains('green_philanthropist')) return Colors.amber;
+    if (badges.contains('caregiver')) return Colors.pink;
+    if (badges.contains('botanist')) return Colors.purple;
+    return AppColors.primary;
+  }
+
   @override
   Widget build(BuildContext context) {
     return Column(
@@ -28,9 +45,7 @@ class LeaderboardPreview extends StatelessWidget {
             ),
             const SizedBox(width: 10),
             Text(
-              isMarathi
-                  ? 'ग्रीन गार्डियन्स (लीडरबोर्ड)'
-                  : 'Green Guardians (Top 5)',
+              'ui_key_153'.tr(),
               style: GoogleFonts.outfit(
                 fontSize: 22,
                 fontWeight: FontWeight.bold,
@@ -82,19 +97,32 @@ class LeaderboardPreview extends StatelessWidget {
                       isTop3 ? Colors.amber.shade700 : AppColors.primary,
                   radius: 22,
                   child: Text(
-                    '#${user['rank']}',
+                    '#$rank',
                     style: const TextStyle(
                       fontWeight: FontWeight.bold,
                       fontSize: 16,
                     ),
                   ),
                 ),
-                title: Text(
-                  user['name'] as String,
-                  style: GoogleFonts.inter(
-                    fontWeight: FontWeight.w600,
-                    fontSize: 16,
-                  ),
+                title: Row(
+                  children: [
+                    Flexible(
+                      child: Text(
+                        user['name'] as String,
+                        style: GoogleFonts.inter(
+                          fontWeight: FontWeight.w600,
+                          fontSize: 16,
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    const SizedBox(width: 6),
+                    Icon(
+                      _getPrestigeIcon(user['badges'] as List<String>?),
+                      color: _getPrestigeColor(user['badges'] as List<String>?),
+                      size: 16,
+                    ),
+                  ],
                 ),
                 trailing: Container(
                   padding: const EdgeInsets.symmetric(

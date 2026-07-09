@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
-import '../providers/settings_provider.dart';
-import 'package:provider/provider.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:provider/provider.dart';
 import '../theme/app_colors.dart';
+import '../providers/user_provider.dart';
+import '../services/notification_service.dart';
 
 class PledgeDialog extends StatefulWidget {
   const PledgeDialog({
@@ -14,23 +16,22 @@ class PledgeDialog extends StatefulWidget {
 }
 
 class _PledgeDialogState extends State<PledgeDialog> {
-  bool get isMarathi => context.watch<SettingsProvider>().isMarathi;
   int _targetTrees = 10;
   bool _isSaving = false;
 
   void _savePledge() async {
     setState(() => _isSaving = true);
-    // Simulate network delay for saving to Firebase
-    await Future.delayed(const Duration(seconds: 1));
+    
+    await context.read<UserProvider>().savePledge(_targetTrees);
+    await NotificationService().scheduleMonthlyPledgeReminder(_targetTrees);
+
     if (!mounted) return;
 
     Navigator.pop(context);
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(
-          isMarathi
-              ? 'शपथ घेतली! तुमचे लक्ष्य $_targetTrees झाडे आहे.'
-              : 'Pledge taken! Your goal is $_targetTrees trees.',
+          'ui_key_163'.tr(namedArgs: {'targetTrees': '$_targetTrees'}),
         ),
         backgroundColor: AppColors.success,
       ),
@@ -49,7 +50,7 @@ class _PledgeDialogState extends State<PledgeDialog> {
             const Icon(Icons.handshake, size: 64, color: AppColors.primary),
             const SizedBox(height: 16),
             Text(
-              isMarathi ? 'माझी हरित शपथ' : 'My Green Pledge',
+              'ui_key_164'.tr(),
               style: GoogleFonts.outfit(
                 fontSize: 24,
                 fontWeight: FontWeight.bold,
@@ -58,9 +59,7 @@ class _PledgeDialogState extends State<PledgeDialog> {
             ),
             const SizedBox(height: 8),
             Text(
-              isMarathi
-                  ? 'या वर्षी तुम्ही किती झाडे लावण्याची शपथ घेता?'
-                  : 'How many trees do you pledge to plant this year?',
+              'ui_key_165'.tr(),
               textAlign: TextAlign.center,
               style: GoogleFonts.inter(
                 fontSize: 14,
@@ -125,7 +124,7 @@ class _PledgeDialogState extends State<PledgeDialog> {
                         ),
                       )
                     : Text(
-                        isMarathi ? 'शपथ घ्या' : 'Confirm Pledge',
+                        'ui_key_166'.tr(),
                         style: GoogleFonts.inter(
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
@@ -138,7 +137,7 @@ class _PledgeDialogState extends State<PledgeDialog> {
             TextButton(
               onPressed: () => Navigator.pop(context),
               child: Text(
-                isMarathi ? 'रद्द करा' : 'Cancel',
+                'ui_key_167'.tr(),
                 style: const TextStyle(color: AppColors.textSecondary),
               ),
             ),

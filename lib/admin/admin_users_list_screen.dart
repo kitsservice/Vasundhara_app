@@ -62,6 +62,7 @@ class _AdminUsersListScreenState extends State<AdminUsersListScreen> {
               stream: FirebaseFirestore.instance
                   .collection('users')
                   .orderBy('createdAt', descending: true)
+                  .limit(100)
                   .snapshots(),
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
@@ -110,11 +111,12 @@ class _AdminUsersListScreenState extends State<AdminUsersListScreen> {
                     final name = data['name'] ?? 'Unknown User';
                     final email = data['email'] ?? 'No email';
                     final role = data['role'] ?? 'user';
+                    final isBanned = data['isBanned'] == true;
 
                     return Container(
                       margin: const EdgeInsets.only(bottom: 12),
                       decoration: BoxDecoration(
-                        color: Colors.white,
+                        color: isBanned ? Colors.grey.shade50 : Colors.white,
                         borderRadius: BorderRadius.circular(16),
                         boxShadow: [
                           BoxShadow(
@@ -127,11 +129,12 @@ class _AdminUsersListScreenState extends State<AdminUsersListScreen> {
                       child: ListTile(
                         contentPadding: const EdgeInsets.all(16),
                         leading: CircleAvatar(
-                          backgroundColor:
-                              AppColors.primary.withValues(alpha: 0.1),
-                          child: const Icon(
+                          backgroundColor: isBanned 
+                              ? Colors.grey.withValues(alpha: 0.1) 
+                              : AppColors.primary.withValues(alpha: 0.1),
+                          child: Icon(
                             CupertinoIcons.person_fill,
-                            color: AppColors.primary,
+                            color: isBanned ? Colors.grey : AppColors.primary,
                           ),
                         ),
                         title: Text(
@@ -139,35 +142,62 @@ class _AdminUsersListScreenState extends State<AdminUsersListScreen> {
                           style: GoogleFonts.outfit(
                             fontWeight: FontWeight.bold,
                             fontSize: 16,
+                            decoration: isBanned ? TextDecoration.lineThrough : null,
+                            color: isBanned ? Colors.grey : null,
                           ),
                         ),
                         subtitle: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             const SizedBox(height: 4),
-                            Text(email, style: GoogleFonts.inter(fontSize: 13)),
+                            Text(email, style: GoogleFonts.inter(fontSize: 13, color: isBanned ? Colors.grey : null)),
                             const SizedBox(height: 4),
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 8,
-                                vertical: 2,
-                              ),
-                              decoration: BoxDecoration(
-                                color: role == 'admin'
-                                    ? Colors.red.shade100
-                                    : Colors.blue.shade100,
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              child: Text(
-                                role.toUpperCase(),
-                                style: GoogleFonts.inter(
-                                  fontSize: 10,
-                                  fontWeight: FontWeight.bold,
-                                  color: role == 'admin'
-                                      ? Colors.red.shade700
-                                      : Colors.blue.shade700,
+                            Row(
+                              children: [
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 8,
+                                    vertical: 2,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: role == 'admin'
+                                        ? Colors.purple.shade100
+                                        : Colors.blue.shade100,
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  child: Text(
+                                    role.toUpperCase(),
+                                    style: GoogleFonts.inter(
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.bold,
+                                      color: role == 'admin'
+                                          ? Colors.purple.shade700
+                                          : Colors.blue.shade700,
+                                    ),
+                                  ),
                                 ),
-                              ),
+                                if (isBanned) ...[
+                                  const SizedBox(width: 8),
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 8,
+                                      vertical: 2,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: Colors.red.shade100,
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                    child: Text(
+                                      'BANNED',
+                                      style: GoogleFonts.inter(
+                                        fontSize: 10,
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.red.shade700,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ],
                             ),
                           ],
                         ),

@@ -5,6 +5,11 @@ import 'package:intl/intl.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../theme/app_colors.dart';
 import 'admin_users_list_screen.dart';
+import 'admin_verify_trees_screen.dart';
+import 'admin_suggested_sites_screen.dart';
+import 'admin_donations_screen.dart';
+import 'admin_global_map_screen.dart';
+import 'admin_campaign_view.dart';
 
 class AdminStatsView extends StatefulWidget {
   const AdminStatsView({super.key});
@@ -174,12 +179,15 @@ class _AdminStatsViewState extends State<AdminStatsView> {
                       color: const Color(0xFF1F2937),
                     ),
                   ),
-                  Text(
-                    'View All',
-                    style: GoogleFonts.inter(
-                      fontSize: 13,
-                      fontWeight: FontWeight.bold,
-                      color: const Color(0xFF16A34A),
+                  GestureDetector(
+                    onTap: _fetchStats,
+                    child: Text(
+                      'Refresh',
+                      style: GoogleFonts.inter(
+                        fontSize: 13,
+                        fontWeight: FontWeight.bold,
+                        color: const Color(0xFF16A34A),
+                      ),
                     ),
                   ),
                 ],
@@ -187,100 +195,150 @@ class _AdminStatsViewState extends State<AdminStatsView> {
             ),
             const SizedBox(height: 16),
 
-            // 2x2 Grid
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20.0),
-              child: Column(
-                children: [
-                  Row(
-                    children: [
-                      Expanded(
-                        child: _buildGridCard(
-                          'Total Trees Planted',
-                          NumberFormat('#,###').format(_totalTrees),
-                          'Real-time',
-                          CupertinoIcons.tree,
-                          const Color(0xFF16A34A),
-                          const Color(0xFFF0FDF4),
-                          onTap: () {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content:
-                                    Text('Detailed trees view coming soon!'),
-                              ),
-                            );
-                          },
-                        ),
-                      ),
-                      const SizedBox(width: 16),
-                      Expanded(
-                        child: _buildGridCard(
-                          'Trees Survived',
-                          NumberFormat('#,###').format(
-                            (_totalTrees * 0.85).round(),
-                          ), // Mock survival rate for now
-                          '~85%',
-                          CupertinoIcons.tree,
-                          const Color(0xFF3B82F6),
-                          const Color(0xFFEFF6FF),
-                          onTap: () {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content:
-                                    Text('Survival analytics coming soon!'),
-                              ),
-                            );
-                          },
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 16),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: _buildGridCard(
-                          'Locations',
-                          _totalLocations.toString(),
-                          'Live',
-                          CupertinoIcons.location_solid,
-                          const Color(0xFFF59E0B),
-                          const Color(0xFFFFFBEB),
-                          onTap: () {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text(
-                                  'Global locations map coming soon!',
+            // Live Fetching Stats Grid
+            StreamBuilder<QuerySnapshot>(
+              stream: FirebaseFirestore.instance.collection('planted_trees').snapshots(),
+              builder: (context, treeSnapshot) {
+                return StreamBuilder<QuerySnapshot>(
+                  stream: FirebaseFirestore.instance.collection('users').snapshots(),
+                  builder: (context, userSnapshot) {
+                    
+                    int liveTrees = 0;
+                    int liveSurvived = 0;
+                    int liveLocations = 0;
+                    int liveUsers = 0;
+
+                    if (treeSnapshot.hasData) {
+                      final Set<String> locs = {};
+                      for (var doc in treeSnapshot.data!.docs) {
+                        final data = doc.data() as Map<String, dynamic>;
+                        final qty = (data['quantity'] as num?)?.toInt() ?? 1;
+                        liveTrees += qty;
+                        
+                        final status = (data['status'] as String?)?.toLowerCase() ?? 'pending';
+                        // A tree is only 'survived' if it has been explicitly verified by the admin after 6 months
+                        if (status == 'survived') {
+                          liveSurvived += qty;
+                        }
+
+                        if (data['latitude'] != null && data['longitude'] != null) {
+                          locs.add('${data['latitude']}_${data['longitude']}');
+                        }
+                      }
+                      liveLocations = locs.length;
+                    } else {
+                      liveTrees = _totalTrees;
+                      liveSurvived = (_totalTrees * 0.85).round();
+                      liveLocations = _totalLocations;
+                    }
+
+                    if (userSnapshot.hasData) {
+                      liveUsers = userSnapshot.data!.docs.where((doc) {
+                        final d = doc.data() as Map<String, dynamic>;
+                        return d['isBanned'] != true;
+                      }).length;
+                    } else {
+                      liveUsers = _userCount;
+                    }
+
+                    String survivalRate = '0%';
+                    if (liveTrees > 0) {
+                      survivalRate = '~${((liveSurvived / liveTrees) * 100).round()}%';
+                    }
+
+                    return Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                      child: Column(
+                        children: [
+                          Row(
+                            children: [
+                              Expanded(
+                                child: _buildGridCard(
+                                  'Total Trees Planted',
+                                  NumberFormat('#,###').format(liveTrees),
+                                  'Live',
+                                  CupertinoIcons.tree,
+                                  const Color(0xFF16A34A),
+                                  const Color(0xFFF0FDF4),
+                                  onTap: () {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) => const AdminVerifyTreesScreen(),
+                                      ),
+                                    );
+                                  },
                                 ),
                               ),
-                            );
-                          },
-                        ),
-                      ),
-                      const SizedBox(width: 16),
-                      Expanded(
-                        child: _buildGridCard(
-                          'Active Users',
-                          _userCount.toString(),
-                          'Live',
-                          CupertinoIcons.person_2_fill,
-                          const Color(0xFF8B5CF6),
-                          const Color(0xFFF5F3FF),
-                          onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) =>
-                                    const AdminUsersListScreen(),
+                              const SizedBox(width: 16),
+                              Expanded(
+                                child: _buildGridCard(
+                                  'Trees Survived',
+                                  NumberFormat('#,###').format(liveSurvived), 
+                                  survivalRate,
+                                  CupertinoIcons.tree,
+                                  const Color(0xFF3B82F6),
+                                  const Color(0xFFEFF6FF),
+                                  onTap: () {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) => const AdminVerifyTreesScreen(),
+                                      ),
+                                    );
+                                  },
+                                ),
                               ),
-                            );
-                          },
-                        ),
+                            ],
+                          ),
+                          const SizedBox(height: 16),
+                          Row(
+                            children: [
+                              Expanded(
+                                child: _buildGridCard(
+                                  'Locations',
+                                  liveLocations.toString(),
+                                  'Live',
+                                  CupertinoIcons.location_solid,
+                                  const Color(0xFFF59E0B),
+                                  const Color(0xFFFFFBEB),
+                                  onTap: () {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) => const AdminGlobalMapScreen(),
+                                      ),
+                                    );
+                                  },
+                                ),
+                              ),
+                              const SizedBox(width: 16),
+                              Expanded(
+                                child: _buildGridCard(
+                                  'Active Users',
+                                  liveUsers.toString(),
+                                  'Live',
+                                  CupertinoIcons.person_2_fill,
+                                  const Color(0xFF8B5CF6),
+                                  const Color(0xFFF5F3FF),
+                                  onTap: () {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) => const AdminUsersListScreen(),
+                                      ),
+                                    );
+                                  },
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
                       ),
-                    ],
-                  ),
-                ],
-              ),
+                    );
+                  },
+                );
+              },
             ),
 
             const SizedBox(height: 24),
@@ -321,24 +379,71 @@ class _AdminStatsViewState extends State<AdminStatsView> {
                       'Add Campaign',
                       const Color(0xFFE8F5E9),
                       const Color(0xFF2E7D32),
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => Scaffold(
+                              appBar: AppBar(
+                                title: Text(
+                                  'Campaign & Events',
+                                  style: GoogleFonts.outfit(
+                                    color: AppColors.textPrimary,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                backgroundColor: Colors.white,
+                                elevation: 0,
+                                iconTheme: const IconThemeData(color: AppColors.textPrimary),
+                              ),
+                              backgroundColor: AppColors.background,
+                              body: const AdminCampaignView(),
+                            ),
+                          ),
+                        );
+                      },
                     ),
                     _buildQuickAction(
-                      CupertinoIcons.person_2_fill,
-                      'Manage Users',
+                      CupertinoIcons.location_solid,
+                      'Suggested Sites',
                       const Color(0xFFEFF6FF),
                       const Color(0xFF1D4ED8),
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const AdminSuggestedSitesScreen(),
+                          ),
+                        );
+                      },
                     ),
                     _buildQuickAction(
                       CupertinoIcons.tree,
                       'Verify Trees',
                       const Color(0xFFFFF7ED),
                       const Color(0xFFC2410C),
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const AdminVerifyTreesScreen(),
+                          ),
+                        );
+                      },
                     ),
                     _buildQuickAction(
                       CupertinoIcons.chart_bar_alt_fill,
-                      'Reports',
+                      'Donations',
                       const Color(0xFFF5F3FF),
                       const Color(0xFF6D28D9),
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const AdminDonationsScreen(),
+                          ),
+                        );
+                      },
                     ),
                   ],
                 ),
@@ -377,8 +482,8 @@ class _AdminStatsViewState extends State<AdminStatsView> {
               padding: const EdgeInsets.symmetric(horizontal: 20.0),
               child: StreamBuilder<QuerySnapshot>(
                 stream: FirebaseFirestore.instance
-                    .collection('planted_trees')
-                    .orderBy('plantedAt', descending: true)
+                    .collection('admin_notifications')
+                    .orderBy('createdAt', descending: true)
                     .limit(5)
                     .snapshots(),
                 builder: (context, snapshot) {
@@ -408,15 +513,15 @@ class _AdminStatsViewState extends State<AdminStatsView> {
                     child: Column(
                       children: snapshot.data!.docs.map((doc) {
                         final data = doc.data() as Map<String, dynamic>;
-                        final quantity = data['quantity'] ?? 1;
+                        final type = data['type'] ?? 'tree_planted';
+                        final quantity = data['quantity'] ?? data['amount'] ?? 1;
                         final userName = data['userName'] ?? 'Unknown User';
-                        final type = data['treeType'] ?? 'Tree';
 
                         // Calculate time ago (approx)
                         String timeStr = 'Just now';
-                        if (data['plantedAt'] != null) {
+                        if (data['createdAt'] != null) {
                           final DateTime date =
-                              (data['plantedAt'] as Timestamp).toDate();
+                              (data['createdAt'] as Timestamp).toDate();
                           final diff = DateTime.now().difference(date);
                           if (diff.inMinutes < 60) {
                             timeStr = '${diff.inMinutes} min ago';
@@ -427,17 +532,61 @@ class _AdminStatsViewState extends State<AdminStatsView> {
                           }
                         }
 
+                        IconData icon = CupertinoIcons.tree;
+                        Color iconBg = const Color(0xFFE8F5E9);
+                        Color iconColor = const Color(0xFF2E7D32);
+                        String title = '$quantity Tree(s) Planted';
+                        String location = 'Live App Upload';
+                        
+                        if (type == 'donation_request') {
+                          icon = CupertinoIcons.gift_fill;
+                          iconBg = const Color(0xFFEFF6FF);
+                          iconColor = const Color(0xFF1D4ED8);
+                          title = 'Donation Request';
+                          location = 'Awaiting Approval';
+                        } else if (type == 'growth_update_uploaded') {
+                          icon = CupertinoIcons.photo_camera_solid;
+                          iconBg = Colors.blue.shade50;
+                          iconColor = Colors.blue.shade700;
+                          title = '6-Month Growth Photo';
+                          location = 'Needs Verification';
+                        } else if (type == 'badge_unlocked') {
+                          icon = CupertinoIcons.rosette;
+                          iconBg = Colors.orange.shade50;
+                          iconColor = Colors.orange.shade800;
+                          title = 'Badge Unlocked: ${data['badgeId'] ?? ''}';
+                          location = 'Gamification';
+                        } else if (type == 'site_suggested') {
+                          icon = CupertinoIcons.map_pin_ellipse;
+                          iconBg = Colors.purple.shade50;
+                          iconColor = Colors.purple.shade700;
+                          title = 'New Site Suggested';
+                          location = 'Awaiting Review';
+                        } else if (type == 'nursery_registered') {
+                          icon = CupertinoIcons.house_fill;
+                          iconBg = Colors.teal.shade50;
+                          iconColor = Colors.teal.shade800;
+                          title = 'Nursery Registered';
+                          location = 'Partner Network';
+                        } else if (type == 'community_joined') {
+                          icon = CupertinoIcons.person_3_fill;
+                          iconBg = Colors.indigo.shade50;
+                          iconColor = Colors.indigo.shade700;
+                          title = 'Joined Community';
+                          location = data['communityName'] ?? 'Community';
+                        }
+
                         final isLast = doc == snapshot.data!.docs.last;
 
                         return Column(
                           children: [
                             _buildActivityRow(
-                              icon: CupertinoIcons.tree,
-                              iconBg: const Color(0xFFE8F5E9),
-                              iconColor: const Color(0xFF2E7D32),
-                              title: '$quantity $type Planted',
+                              icon: icon,
+                              iconBg: iconBg,
+                              iconColor: iconColor,
+                              title: title,
                               subtitle: 'By $userName',
-                              location: 'Live App Upload',
+                              location: location,
                               time: timeStr,
                               status: 'Added',
                               statusColor: const Color(0xFF16A34A),
@@ -549,27 +698,31 @@ class _AdminStatsViewState extends State<AdminStatsView> {
     String label,
     Color bgColor,
     Color iconColor,
+    {VoidCallback? onTap,}
   ) {
-    return Column(
-      children: [
-        Container(
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: bgColor,
-            shape: BoxShape.circle,
+    return GestureDetector(
+      onTap: onTap,
+      child: Column(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: bgColor,
+              shape: BoxShape.circle,
+            ),
+            child: Icon(icon, color: iconColor, size: 24),
           ),
-          child: Icon(icon, color: iconColor, size: 24),
-        ),
-        const SizedBox(height: 8),
-        Text(
-          label,
-          style: GoogleFonts.inter(
-            fontSize: 10,
-            fontWeight: FontWeight.w500,
-            color: const Color(0xFF4B5563),
+          const SizedBox(height: 8),
+          Text(
+            label,
+            style: GoogleFonts.inter(
+              fontSize: 10,
+              fontWeight: FontWeight.w500,
+              color: const Color(0xFF4B5563),
+            ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 

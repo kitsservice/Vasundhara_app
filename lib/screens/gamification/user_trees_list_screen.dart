@@ -1,12 +1,11 @@
 import 'dart:io';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
-import 'package:intl/intl.dart';
 import 'package:image_picker/image_picker.dart';
 
-import '../../providers/settings_provider.dart';
 import '../../providers/user_provider.dart';
 import '../../theme/app_colors.dart';
 import '../../services/cloudinary_service.dart';
@@ -42,13 +41,10 @@ class _UserTreesListScreenState extends State<UserTreesListScreen> {
               .uploadGrowthPhoto(treeId, imageUrl);
 
           if (mounted) {
-            final isMarathi = context.read<SettingsProvider>().isMarathi;
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
                 content: Text(
-                  isMarathi
-                      ? 'फोटो यशस्वीरित्या अपलोड झाला!'
-                      : 'Photo uploaded successfully!',
+                  'ui_key_61'.tr(),
                 ),
                 backgroundColor: AppColors.success,
               ),
@@ -58,13 +54,10 @@ class _UserTreesListScreenState extends State<UserTreesListScreen> {
       } catch (e) {
         debugPrint('Error uploading growth photo: $e');
         if (mounted) {
-          final isMarathi = context.read<SettingsProvider>().isMarathi;
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(
-                isMarathi
-                    ? 'फोटो अपलोड करण्यात त्रुटी.'
-                    : 'Error uploading photo.',
+                'ui_key_62'.tr(),
               ),
               backgroundColor: Colors.redAccent,
             ),
@@ -82,7 +75,6 @@ class _UserTreesListScreenState extends State<UserTreesListScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final isMarathi = context.watch<SettingsProvider>().isMarathi;
     final trees = context.select<UserProvider, List<PlantedTree>>(
       (provider) => provider.plantedTrees,
     );
@@ -94,7 +86,7 @@ class _UserTreesListScreenState extends State<UserTreesListScreen> {
       backgroundColor: AppColors.background,
       appBar: AppBar(
         title: Text(
-          isMarathi ? 'माझी झाडे' : 'My Planted Trees',
+          'ui_key_63'.tr(),
           style: GoogleFonts.outfit(
             fontWeight: FontWeight.w600,
             color: AppColors.textPrimary,
@@ -116,9 +108,7 @@ class _UserTreesListScreenState extends State<UserTreesListScreen> {
                   ),
                   const SizedBox(height: 16),
                   Text(
-                    isMarathi
-                        ? 'अद्याप कोणतीही झाडे लावली नाहीत'
-                        : 'No trees planted yet',
+                    'ui_key_64'.tr(),
                     style: GoogleFonts.outfit(
                       fontSize: 20,
                       fontWeight: FontWeight.bold,
@@ -136,6 +126,12 @@ class _UserTreesListScreenState extends State<UserTreesListScreen> {
                 final bool isUploading = _uploadingStates[tree.id] ?? false;
                 final bool hasGrowthPhoto = tree.growthImageUrl != null &&
                     tree.growthImageUrl!.isNotEmpty;
+                final DateTime nextUploadDate = DateTime(
+                  tree.datePlanted.year,
+                  tree.datePlanted.month + 6,
+                  tree.datePlanted.day,
+                );
+                final bool canUpload = DateTime.now().isAfter(nextUploadDate);
 
                 return Container(
                   margin: const EdgeInsets.only(bottom: 16),
@@ -162,20 +158,50 @@ class _UserTreesListScreenState extends State<UserTreesListScreen> {
                           decoration: BoxDecoration(
                             color: Colors.grey.shade100,
                             borderRadius: BorderRadius.circular(12),
-                            image: tree.imageUrl != null
+                            image: (tree.imageUrls != null && tree.imageUrls!.isNotEmpty) 
                                 ? DecorationImage(
-                                    image: NetworkImage(tree.imageUrl!),
+                                    image: NetworkImage(tree.imageUrls!.first),
                                     fit: BoxFit.cover,
                                   )
-                                : null,
+                                : tree.imageUrl != null
+                                    ? DecorationImage(
+                                        image: NetworkImage(tree.imageUrl!),
+                                        fit: BoxFit.cover,
+                                      )
+                                    : null,
                           ),
-                          child: tree.imageUrl == null
-                              ? const Icon(
-                                  CupertinoIcons.tree,
-                                  color: AppColors.primary,
-                                  size: 32,
-                                )
-                              : null,
+                          child: Stack(
+                            children: [
+                              if ((tree.imageUrls == null || tree.imageUrls!.isEmpty) && tree.imageUrl == null)
+                                const Center(
+                                  child: Icon(
+                                    CupertinoIcons.tree,
+                                    color: AppColors.primary,
+                                    size: 32,
+                                  ),
+                                ),
+                              if (tree.imageUrls != null && tree.imageUrls!.length > 1)
+                                Positioned(
+                                  bottom: 4,
+                                  right: 4,
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                    decoration: BoxDecoration(
+                                      color: Colors.black.withValues(alpha: 0.6),
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                    child: Text(
+                                      '+${tree.imageUrls!.length - 1}',
+                                      style: const TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 10,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                            ],
+                          ),
                         ),
                         const SizedBox(width: 16),
 
@@ -194,7 +220,7 @@ class _UserTreesListScreenState extends State<UserTreesListScreen> {
                               ),
                               const SizedBox(height: 4),
                               Text(
-                                '${isMarathi ? 'लावले:' : 'Planted:'} ${DateFormat('MMM dd, yyyy').format(tree.datePlanted)}',
+                                '${'ui_key_65'.tr()} ${DateFormat('MMM dd, yyyy').format(tree.datePlanted)}',
                                 style: GoogleFonts.inter(
                                   fontSize: 13,
                                   color: AppColors.textSecondary,
@@ -235,9 +261,7 @@ class _UserTreesListScreenState extends State<UserTreesListScreen> {
                                       ),
                                       const SizedBox(width: 6),
                                       Text(
-                                        isMarathi
-                                            ? 'वाढीचा फोटो जोडला'
-                                            : 'Growth Photo Added',
+                                        'ui_key_66'.tr(),
                                         style: GoogleFonts.inter(
                                           fontSize: 12,
                                           fontWeight: FontWeight.w600,
@@ -252,7 +276,7 @@ class _UserTreesListScreenState extends State<UserTreesListScreen> {
                                   width: double.infinity,
                                   height: 36,
                                   child: ElevatedButton.icon(
-                                    onPressed: isUploading || tree.id == null
+                                    onPressed: (!canUpload || isUploading || tree.id == null)
                                         ? null
                                         : () => _uploadGrowthPhoto(tree.id!),
                                     icon: isUploading
@@ -264,23 +288,24 @@ class _UserTreesListScreenState extends State<UserTreesListScreen> {
                                               strokeWidth: 2,
                                             ),
                                           )
-                                        : const Icon(
-                                            CupertinoIcons.camera_fill,
+                                        : Icon(
+                                            canUpload ? CupertinoIcons.camera_fill : CupertinoIcons.lock_fill,
                                             size: 16,
-                                            color: Colors.white,
+                                            color: canUpload ? Colors.white : Colors.grey.shade400,
                                           ),
                                     label: Text(
-                                      isMarathi
-                                          ? 'वाढीचा फोटो अपलोड करा'
-                                          : 'Upload Growth Photo',
+                                      canUpload 
+                                        ? 'ui_key_67'.tr() 
+                                        : 'Available ${DateFormat('MMM dd, yyyy').format(nextUploadDate)}',
                                       style: GoogleFonts.inter(
                                         fontSize: 12,
                                         fontWeight: FontWeight.bold,
-                                        color: Colors.white,
+                                        color: canUpload ? Colors.white : Colors.grey.shade500,
                                       ),
                                     ),
                                     style: ElevatedButton.styleFrom(
-                                      backgroundColor: AppColors.primary,
+                                      backgroundColor: canUpload ? AppColors.primary : Colors.grey.shade200,
+                                      disabledBackgroundColor: Colors.grey.shade200,
                                       elevation: 0,
                                       padding: const EdgeInsets.symmetric(
                                         horizontal: 12,
